@@ -1,0 +1,237 @@
+package com.geega.bsc.id.server.network;
+
+import com.geega.bsc.id.common.exception.DistributedIdException;
+import com.geega.bsc.id.common.network.ConnectionIdUtil;
+import com.geega.bsc.id.common.network.DistributedIdChannel;
+import com.geega.bsc.id.common.network.IdGeneratorTransportLayer;
+import com.geega.bsc.id.common.network.NetworkReceive;
+import com.geega.bsc.id.common.network.Send;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+/**
+ * @author Jun.An3
+ * @date 2022/07/18
+ */
+public class ServerProcessor extends Thread {
+
+    private final ConcurrentHashMap<String, DistributedIdChannel> channels;
+
+    private final List<NetworkReceive> completedReceives;
+
+    private final Map<DistributedIdChannel, Deque<NetworkReceive>> stagedReceives;
+
+    private final List<Send> completedSends;
+
+    private final ConcurrentLinkedQueue<SocketChannel> newConnections;
+
+    private final int processorId;
+
+    private final ServerRequestChannel requestChannel;
+
+    private Selector selector;
+
+    public void addChannel(SocketChannel channel) {
+        this.newConnections.add(channel);
+        selector.wakeup();
+    }
+
+    public ServerProcessor(int processorId, ServerRequestChannel requestChannel) {
+        this.processorId = processorId;
+        this.requestChannel = requestChannel;
+        this.channels = new ConcurrentHashMap<>();
+        this.newConnections = new ConcurrentLinkedQueue<>();
+        this.completedReceives = new ArrayList<>();
+        this.stagedReceives = new HashMap<>();
+        this.completedSends = new ArrayList<>();
+        init();
+        System.out.println("process-" + processorId + ",运行中");
+    }
+
+    private void init() {
+        try {
+            this.selector = Selector.open();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void run() {
+        //noinspection InfiniteLoopStatement
+        while (true) {
+            try {
+                //从队列中拉取数据出来,完成selector注册
+                configureNewConnections();
+                //处理数据,将数据发送出去,就是写
+                processNewResponses();
+                //尝试拉取事件
+                poll();
+                addToCompletedReceives();
+                //对于读取到的请求,进行处理,然后处理完后,可能会把结果放入newResponses中,等待被发送出去
+                processCompletedReceives();
+                //处理发送数据成功
+                processCompletedSends();
+                processDisconnected();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void processCompletedReceives() {
+        if (!completedReceives.isEmpty()) {
+            Iterator<NetworkReceive> iterator = completedReceives.iterator();
+            while (iterator.hasNext()) {
+                NetworkReceive completedReceive = iterator.next();
+                iterator.remove();
+
+                DistributedIdChannel distributedIdChannel = channels.get(completedReceive.source());
+                Request request = new Request(completedReceive.payload(), distributedIdChannel.id(), processorId);
+                requestChannel.addRequest(request);
+                distributedIdChannel.mute();
+            }
+        }
+    }
+
+    private void poll() {
+        try {
+            selector.select(300);
+
+            Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+            while (iterator.hasNext()) {
+                SelectionKey selectionKey = iterator.next();
+                iterator.remove();
+
+                DistributedIdChannel distributedIdChannel = (DistributedIdChannel) selectionKey.attachment();
+
+                if (selectionKey.isConnectable()) {
+                    if (!distributedIdChannel.finishConnect()) {
+                        continue;
+                    }
+                }
+
+                if (selectionKey.isReadable() && !hasStagedReceive(distributedIdChannel)) {
+                    NetworkReceive networkReceive;
+                    while ((networkReceive = distributedIdChannel.read()) != null) {
+                        addToStagedReceives(distributedIdChannel, networkReceive);
+                    }
+                }
+                if (selectionKey.isWritable()) {
+                    Send send = distributedIdChannel.write();
+                    if (send != null) {
+                        this.completedSends.add(send);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void processNewResponses() {
+        Response curr = requestChannel.getResponse(processorId);
+        while (curr != null) {
+            try {
+                sendResponse(curr);
+            } finally {
+                curr = requestChannel.getResponse(processorId);
+            }
+        }
+    }
+
+    private void sendResponse(Response curr) {
+        DistributedIdChannel channel = channels.get(curr.getDestination());
+        channel.setSend(curr.getSend());
+    }
+
+    private void configureNewConnections() {
+        while (!newConnections.isEmpty()) {
+            SocketChannel channel = newConnections.poll();
+            try {
+                if (channel != null) {
+                    String localHost = channel.socket().getLocalAddress().getHostAddress();
+                    int localPort = channel.socket().getLocalPort();
+                    String remoteHost = channel.socket().getInetAddress().getHostAddress();
+                    int remotePort = channel.socket().getPort();
+                    String connectionId = ConnectionIdUtil.getConnectionId(localHost, localPort, remoteHost, remotePort);
+                    System.out.println("[" + connectionId + "],连接已建立");
+
+                    SelectionKey selectionKey = channel.register(selector, SelectionKey.OP_READ);
+                    DistributedIdChannel distributedIdChannel = buildChannel(connectionId, selectionKey, 1024);
+                    selectionKey.attach(distributedIdChannel);
+                    this.channels.put(connectionId, distributedIdChannel);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private DistributedIdChannel buildChannel(String id, SelectionKey key, int maxReceiveSize) throws DistributedIdException {
+        DistributedIdChannel channel;
+        try {
+            IdGeneratorTransportLayer transportLayer = new IdGeneratorTransportLayer(key);
+            channel = new DistributedIdChannel(id, transportLayer, maxReceiveSize);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Failed to create channel");
+            throw new DistributedIdException(e);
+        }
+        return channel;
+    }
+
+    private void processCompletedSends() {
+        for (Send send : completedSends) {
+            String destination = send.destination();
+            DistributedIdChannel distributedIdChannel = channels.get(destination);
+            distributedIdChannel.unmute();
+        }
+    }
+
+    //todo
+    private void processDisconnected() {
+
+    }
+
+    private void addToStagedReceives(DistributedIdChannel channel, NetworkReceive receive) {
+        if (!stagedReceives.containsKey(channel)) {
+            stagedReceives.put(channel, new ArrayDeque<>());
+        }
+        Deque<NetworkReceive> deque = stagedReceives.get(channel);
+        deque.add(receive);
+    }
+
+    private boolean hasStagedReceive(DistributedIdChannel channel) {
+        return stagedReceives.containsKey(channel);
+    }
+
+    private void addToCompletedReceives() {
+        if (!this.stagedReceives.isEmpty()) {
+            Iterator<Map.Entry<DistributedIdChannel, Deque<NetworkReceive>>> iter = this.stagedReceives.entrySet().iterator();
+            while (iter.hasNext()) {
+                Map.Entry<DistributedIdChannel, Deque<NetworkReceive>> entry = iter.next();
+                DistributedIdChannel channel = entry.getKey();
+                if (!channel.isMute()) {
+                    Deque<NetworkReceive> deque = entry.getValue();
+                    NetworkReceive networkReceive = deque.poll();
+                    this.completedReceives.add(networkReceive);
+                    if (deque.isEmpty()) {
+                        iter.remove();
+                    }
+                }
+            }
+        }
+    }
+
+}
