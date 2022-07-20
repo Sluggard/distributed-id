@@ -11,7 +11,7 @@
         <module>distributed-id-client</module>
         <module>distributed-id-server</module>
         <module>distributed-id-common</module>
-        <module>id-springboot-starter</module>
+        <module>id-spring-boot-starter</module>
     </modules>
 
     <properties>

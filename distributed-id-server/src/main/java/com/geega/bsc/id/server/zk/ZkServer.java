@@ -1,11 +1,12 @@
 package com.geega.bsc.id.server.zk;
 
+import com.alibaba.fastjson.JSON;
+import com.geega.bsc.id.common.address.NodeAddress;
+import com.geega.bsc.id.common.config.ZkConfig;
 import com.geega.bsc.id.common.constant.ZkTreeConstant;
-import com.geega.bsc.id.common.dto.NodeAddress;
 import com.geega.bsc.id.common.factory.ZookeeperFactory;
 import com.geega.bsc.id.common.utils.TimeUtil;
 import com.geega.bsc.id.server.config.ServerConfig;
-import com.alibaba.fastjson.JSON;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -27,9 +28,9 @@ public class ZkServer {
 
     private final CuratorFramework zkClient;
 
-    public ZkServer(ServerConfig serverConfig) {
+    public ZkServer(ServerConfig serverConfig, ZkConfig zkConfig) {
         this.serverConfig = serverConfig;
-        this.zkClient = new ZookeeperFactory().getClient();
+        this.zkClient = new ZookeeperFactory(zkConfig).instance();
     }
 
     public void init() {

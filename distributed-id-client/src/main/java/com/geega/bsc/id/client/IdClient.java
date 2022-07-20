@@ -1,6 +1,7 @@
 package com.geega.bsc.id.client;
 
 import com.geega.bsc.id.client.network.IdProcessorDispatch;
+import com.geega.bsc.id.common.config.ZkConfig;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,8 +26,8 @@ public class IdClient {
 
     private final IdProcessorDispatch processorDispatch;
 
-    public IdClient() {
-        this.processorDispatch = new IdProcessorDispatch(new ZkClient(), this);
+    public IdClient(ZkConfig zkConfig) {
+        this.processorDispatch = new IdProcessorDispatch(new ZkClient(zkConfig), this);
         this.executorService = Executors.newSingleThreadExecutor();
         this.executeOnce(capacity);
     }

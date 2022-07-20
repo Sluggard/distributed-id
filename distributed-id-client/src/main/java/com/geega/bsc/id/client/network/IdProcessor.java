@@ -1,7 +1,7 @@
 package com.geega.bsc.id.client.network;
 
 import com.geega.bsc.id.client.IdClient;
-import com.geega.bsc.id.common.dto.NodeAddress;
+import com.geega.bsc.id.common.address.NodeAddress;
 import com.geega.bsc.id.common.exception.DistributedIdException;
 import com.geega.bsc.id.common.network.DistributedIdChannel;
 import com.geega.bsc.id.common.network.IdGeneratorTransportLayer;
@@ -14,8 +14,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.CharsetEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;

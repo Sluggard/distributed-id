@@ -1,5 +1,6 @@
 package com.geega.bsc.id.server;
 
+import com.geega.bsc.id.common.config.ZkConfig;
 import com.geega.bsc.id.common.sync.Sync;
 import com.geega.bsc.id.common.utils.SnowFlake;
 import com.geega.bsc.id.server.config.ServerConfig;
@@ -22,8 +23,14 @@ public class Server {
         serverConfig.setIp("192.168.0.106");
         serverConfig.setPort(9999);
 
+        ZkConfig zkConfig = new ZkConfig();
+        zkConfig.setNamespace("id");
+        zkConfig.setConnection("127.0.0.1:2181");
+        zkConfig.setSessionTimeoutMs(10000);
+        zkConfig.setConnectionTimeoutMs(10000);
+
         //向zk注册，并定时心跳
-        ZkServer zkServer = new ZkServer(serverConfig);
+        ZkServer zkServer = new ZkServer(serverConfig, zkConfig);
         zkServer.init();
 
         ServerRequestChannel requestChannel = new ServerRequestChannel();

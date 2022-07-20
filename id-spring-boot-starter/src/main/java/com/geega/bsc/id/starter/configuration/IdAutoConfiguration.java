@@ -6,13 +6,14 @@
 package com.geega.bsc.id.starter.configuration;
 
 import com.geega.bsc.id.client.IdClient;
+import com.geega.bsc.id.common.config.ZkConfig;
 import com.geega.bsc.id.starter.properties.IdProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * GeelyIdAutoConfiguration
+ * IdAutoConfiguration
  *
  * @author Jun.An3
  * @date 2022/07/19
@@ -22,8 +23,13 @@ import org.springframework.context.annotation.Configuration;
 public class IdAutoConfiguration {
 
     @Bean
-    public IdClient idClient(){
-        return new IdClient();
+    public IdClient idClient(IdProperties idProperties) {
+        ZkConfig zkConfig = new ZkConfig();
+        zkConfig.setConnection(idProperties.getConnection());
+        zkConfig.setNamespace(idProperties.getNamespace());
+        zkConfig.setConnectionTimeoutMs(idProperties.getConnectionTimeoutMs());
+        zkConfig.setSessionTimeoutMs(idProperties.getSessionTimeoutMs());
+        return new IdClient(zkConfig);
     }
 
 }

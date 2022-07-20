@@ -1,6 +1,6 @@
 package com.geega.bsc.id.client.node;
 
-import com.geega.bsc.id.common.dto.NodeAddress;
+import com.geega.bsc.id.common.address.NodeAddress;
 import com.geega.bsc.id.common.utils.TimeUtil;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;

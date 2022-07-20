@@ -21,7 +21,7 @@ public class ZkTest1 {
 
     public static void main(String[] args) throws Exception {
         ZookeeperFactory zkFactory = new ZookeeperFactory();
-        final CuratorFramework instance = zkFactory.getClient();
+        final CuratorFramework instance = zkFactory.instance();
 
         //true代表初始化时就获取节点的数据并且缓存到本地
         PathChildrenCache nodeCache = new PathChildrenCache(instance, "/distributed/id", true);

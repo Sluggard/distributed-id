@@ -1,4 +1,4 @@
-package com.geega.bsc.id.common.dto;
+package com.geega.bsc.id.common.address;
 
 import lombok.Builder;
 import lombok.Data;

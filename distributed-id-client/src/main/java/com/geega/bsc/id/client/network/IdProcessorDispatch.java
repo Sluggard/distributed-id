@@ -2,7 +2,7 @@ package com.geega.bsc.id.client.network;
 
 import com.geega.bsc.id.client.ZkClient;
 import com.geega.bsc.id.client.IdClient;
-import com.geega.bsc.id.common.dto.NodeAddress;
+import com.geega.bsc.id.common.address.NodeAddress;
 import java.util.List;
 
 /**

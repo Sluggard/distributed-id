@@ -5,6 +5,7 @@
 
 package com.geega.bsc.id.starter.properties;
 
+import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -13,11 +14,28 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @author Jun.An3
  * @date 2022/07/19
  */
-@ConfigurationProperties(prefix = "geely.id")
+@Data
+@ConfigurationProperties(prefix = "id.zk")
 public class IdProperties {
 
-    private String zkAddress = "127.0.0.1:2181";
+    /**
+     * eg:geely
+     */
+    String namespace;
 
-    private String zkNamespace = "geely";
+    /**
+     * eg:127.0.0.1:2181
+     */
+    String connection;
+
+    /**
+     * eg:10000
+     */
+    Integer sessionTimeoutMs;
+
+    /**
+     * eg:10000
+     */
+    Integer connectionTimeoutMs;
 
 }

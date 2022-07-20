@@ -9,7 +9,7 @@ public class ZkPractice {
     public static void main(String[] args) throws Exception {
         long now = System.currentTimeMillis();
         ZookeeperFactory zkFactory = new ZookeeperFactory();
-        CuratorFramework client = zkFactory.getClient();
+        CuratorFramework client = zkFactory.instance();
         String data;
         //创建永久节点
         data = client.create().creatingParentsIfNeeded().forPath("/persistent/" + now, "data".getBytes());

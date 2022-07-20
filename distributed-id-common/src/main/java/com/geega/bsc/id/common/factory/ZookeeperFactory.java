@@ -5,6 +5,7 @@
 
 package com.geega.bsc.id.common.factory;
 
+import com.geega.bsc.id.common.config.ZkConfig;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -30,18 +31,28 @@ public class ZookeeperFactory {
         );
     }
 
+    public ZookeeperFactory(ZkConfig zkConfig) {
+        this(
+                zkConfig.getNamespace(),
+                zkConfig.getConnection(),
+                zkConfig.getSessionTimeoutMs(),
+                zkConfig.getConnectionTimeoutMs(),
+                new ExponentialBackoffRetry(1000, 3)
+        );
+    }
+
     public ZookeeperFactory(String namespace,
-                            String connectionString,
+                            String connection,
                             Integer sessionTimeoutMs,
                             Integer connectionTimeoutMs,
                             RetryPolicy retryPolicy) {
         assert namespace != null;
-        assert connectionString != null;
+        assert connection != null;
         assert sessionTimeoutMs != null;
         assert connectionTimeoutMs != null;
         client = CuratorFrameworkFactory.builder()
                 .namespace(namespace)
-                .connectString(connectionString)
+                .connectString(connection)
                 .sessionTimeoutMs(sessionTimeoutMs)
                 .connectionTimeoutMs(connectionTimeoutMs)
                 .retryPolicy(retryPolicy)
@@ -49,7 +60,7 @@ public class ZookeeperFactory {
         client.start();
     }
 
-    public CuratorFramework getClient() {
+    public CuratorFramework instance() {
         return this.client;
     }
 

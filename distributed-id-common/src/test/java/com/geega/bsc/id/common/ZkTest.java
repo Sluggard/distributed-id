@@ -20,7 +20,7 @@ public class ZkTest {
 
     public static void main(String[] args) throws Exception {
         ZookeeperFactory zkFactory = new ZookeeperFactory();
-        final CuratorFramework instance = zkFactory.getClient();
+        final CuratorFramework instance = zkFactory.instance();
         //创建服务端目录
         String s = instance.create().creatingParentsIfNeeded().withProtection().withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath("/distributed/id/server", "{\"ip\":\"127.0.0.1\",\"port\":\"10000\"}".getBytes());
         System.out.println(s);

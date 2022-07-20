@@ -2,8 +2,9 @@ package com.geega.bsc.id.client;
 
 import com.alibaba.fastjson.JSON;
 import com.geega.bsc.id.client.node.NodesInformation;
+import com.geega.bsc.id.common.config.ZkConfig;
 import com.geega.bsc.id.common.constant.ZkTreeConstant;
-import com.geega.bsc.id.common.dto.NodeAddress;
+import com.geega.bsc.id.common.address.NodeAddress;
 import com.geega.bsc.id.common.factory.ZookeeperFactory;
 import com.geega.bsc.id.common.utils.TimeUtil;
 import org.apache.curator.framework.CuratorFramework;
@@ -22,7 +23,10 @@ public class ZkClient {
 
     private final NodesInformation nodesInformation;
 
-    public ZkClient() {
+    private final ZkConfig zkConfig;
+
+    public ZkClient(ZkConfig zkConfig) {
+        this.zkConfig = zkConfig;
         this.nodesInformation = new NodesInformation();
         this.start();
     }
@@ -34,8 +38,8 @@ public class ZkClient {
     private void start() {
         try {
             //创建zk客户端
-            final ZookeeperFactory factory = new ZookeeperFactory();
-            final CuratorFramework zkClient = factory.getClient();
+            final ZookeeperFactory factory = new ZookeeperFactory(this.zkConfig);
+            final CuratorFramework zkClient = factory.instance();
 
             //获取当前已注册服务
             final List<String> zkNodePaths = zkClient.getChildren().forPath(ZkTreeConstant.ZK_SERVER_ROOT);
