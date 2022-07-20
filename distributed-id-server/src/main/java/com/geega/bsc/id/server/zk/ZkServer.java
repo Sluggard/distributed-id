@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ZkServer {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(ZkServer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ZkServer.class);
 
     private volatile Integer workId;
 
@@ -47,7 +47,7 @@ public class ZkServer {
      * 定时上传心跳
      */
     private void sendHeartbeat() {
-        HeartBeatProcessor register = new HeartBeatProcessor();
+        ZkHeartBeatProcessor register = new ZkHeartBeatProcessor();
         register.sendHeartBeat(() -> {
             try {
                 Stat stat = zkClient.setData().forPath(ZkTreeConstant.ZK_SERVER_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + getAddress(serverConfig.getIp(), serverConfig.getPort()), getDataBytes(serverConfig.getIp(), serverConfig.getPort()));

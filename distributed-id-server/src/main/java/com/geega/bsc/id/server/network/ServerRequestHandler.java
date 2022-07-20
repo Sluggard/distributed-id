@@ -2,7 +2,8 @@ package com.geega.bsc.id.server.network;
 
 import com.geega.bsc.id.common.utils.ByteBufferUtil;
 import com.geega.bsc.id.common.utils.SnowFlake;
-import com.alibaba.fastjson.JSON;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ServerRequestHandler extends Thread {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServerRequestHandler.class);
 
     private final ServerRequestChannel requestChannel;
 
@@ -30,7 +32,7 @@ public class ServerRequestHandler extends Thread {
             TimeUnit.MILLISECONDS,
             new LinkedBlockingQueue<>(),
             r -> new Thread(r, "request-handler-thread-" + threadIndex.incrementAndGet()),
-            (r, executor) -> System.out.println("丢弃")
+            (r, executor) -> LOGGER.info("丢弃")
     );
 
     public ServerRequestHandler(ServerRequestChannel requestChannel, SnowFlake snowFlake) {
@@ -65,6 +67,7 @@ public class ServerRequestHandler extends Thread {
     }
 
     private void getNextId(Request request) {
+
         int needNum = ByteBufferUtil.byteToIntV2(request.getData());
         List<Long> ids = new ArrayList<>();
         for (int i = 0; i < needNum; i++) {
@@ -77,8 +80,7 @@ public class ServerRequestHandler extends Thread {
                 ByteBufferUtil.getSendForServer(request.getConnectionId(), ids)
         );
 
-        System.err.println("需要生成的数量:" + needNum);
-        System.err.println("生成的分布式ID:" + JSON.toJSONString(ids));
+        LOGGER.info("数量:{},生成ID:{}", needNum, ids);
         requestChannel.addResponse(request.getProcessorId(), response);
     }
 

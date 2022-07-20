@@ -10,12 +10,13 @@ import java.util.concurrent.TimeUnit;
  * @author Jun.An3
  * @date 2022/07/11
  */
-public class HeartBeatProcessor {
+public class ZkHeartBeatProcessor {
 
     private final ScheduledExecutorService executorService;
 
-    public HeartBeatProcessor() {
+    public ZkHeartBeatProcessor() {
         //初始化单线程定时任务执行器
+        //noinspection AlibabaThreadPoolCreation
         this.executorService = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread thread = new Thread(r, "heartbeat-schedule");
             thread.setDaemon(true);

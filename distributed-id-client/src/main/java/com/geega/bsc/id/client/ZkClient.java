@@ -50,7 +50,7 @@ public class ZkClient {
             final List<String> zkNodePaths = zkClient.getChildren().forPath(ZkTreeConstant.ZK_SERVER_ROOT);
             LOGGER.info("当前已注册服务节点：{}", JSON.toJSONString(zkNodePaths));
             for (String zkNodePath : zkNodePaths) {
-                addNode(zkNodePath);
+                updateNode(zkNodePath);
             }
 
             //监听某个节点
@@ -62,25 +62,23 @@ public class ZkClient {
             nodeCache.getListenable().addListener((curatorFramework, event) -> {
                 String path = event.getData().getPath();
                 //noinspection unused
-                byte[] bytes = event.getData().getData();
+                byte[] data = event.getData().getData();
                 switch (event.getType()) {
                     case CHILD_ADDED:
-                        LOGGER.info("新增服务节点：{}", event.getData());
-                        addNode(path);
+                    case CHILD_UPDATED:
+                        LOGGER.info("更新服务节点：{}", event.getData());
+                        updateNode(path);
                         break;
                     case CHILD_REMOVED:
                         LOGGER.info("删除服务节点：{}", event.getData());
-                        removeNode(path, bytes);
+                        removeNode(path);
                         break;
-                    case CHILD_UPDATED:
-
                     default:
                         break;
                 }
             });
-            //等待最多默认5s，获取不到ID生成服务，就跑异常
+            //等待最多默认5s，获取不到ID生成服务，就抛异常
             waitTimeoutThrow();
-
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
@@ -105,13 +103,12 @@ public class ZkClient {
         }
     }
 
-    private void addNode(String zkNodePath) {
+    private void updateNode(String zkNodePath) {
         nodesInformation.update(getNodeAddress(zkNodePath));
     }
 
-    private void removeNode(String zkNodePath, byte[] bytes) {
-        NodeAddress nodeAddress = JSON.parseObject(new String(bytes), NodeAddress.class);
-        nodesInformation.remove(nodeAddress);
+    private void removeNode(String zkNodePath) {
+        nodesInformation.remove(getNodeAddress(zkNodePath));
     }
 
     private NodeAddress getNodeAddress(String zkNodePath) {
