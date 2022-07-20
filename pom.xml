@@ -2,18 +2,104 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <groupId>com.geega.cloud</groupId>
-        <artifactId>framework-design</artifactId>
-        <version>1.0-SNAPSHOT</version>
-    </parent>
     <modelVersion>4.0.0</modelVersion>
+    <groupId>com.geega.cloud</groupId>
     <artifactId>distributed-id</artifactId>
+    <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
         <module>distributed-id-client</module>
         <module>distributed-id-server</module>
         <module>distributed-id-common</module>
-        <module>geely-id-springboot-starter</module>
+        <module>id-springboot-starter</module>
     </modules>
+
+    <properties>
+        <!--lombok-->
+        <lombok.version>1.18.24</lombok.version>
+<!--        <releases-url>http://127.0.0.1:8081/repository/maven-public/</releases-url>-->
+<!--        <snapshots-url>http://127.0.0.1:8081/repository/maven-snapshots/</snapshots-url>-->
+        <releases-url>http://10.113.75.27:8081/nexus/repository/maven-public/</releases-url>
+        <snapshots-url>http://10.113.75.27:8081/nexus/repository/maven-snapshots/</snapshots-url>
+    </properties>
+
+    <!--通用依赖,每个子模块都会有这些依赖-->
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <!--构建测试,编译,打包,发布等操作-->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.19.1</version>
+                <configuration>
+                    <!--默认关掉单元测试 -->
+                    <skipTests>true</skipTests>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <!--上传jar时,发布到该url对应的仓库中-->
+    <distributionManagement>
+        <!--version带release的,发布到该正式版本仓库-->
+        <repository>
+            <id>maven-releases</id>
+            <name>releases</name>
+            <url>${releases-url}</url>
+        </repository>
+        <!--version带snapshots的,发布到该快照版本仓库-->
+        <snapshotRepository>
+            <id>maven-snapshots</id>
+            <name>snapshots</name>
+            <url>${snapshots-url}</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <!--下载jar时,私服仓库地址-->
+    <repositories>
+        <repository>
+            <!--仓库id,不能重复-->
+            <id>maven-releases</id>
+            <url>${releases-url}</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
+        <repository>
+            <!--仓库id,不能重复-->
+            <id>maven-snapshots</id>
+            <!--仓库地址-->
+            <url>${snapshots-url}</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
+    </repositories>
 </project>
