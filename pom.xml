@@ -7,6 +7,7 @@
     <artifactId>distributed-id</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
+
     <modules>
         <module>distributed-id-client</module>
         <module>distributed-id-server</module>
@@ -18,8 +19,10 @@
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
+        <java.version>1.8</java.version>
         <!--lombok-->
         <lombok.version>1.18.24</lombok.version>
+        <spring.boot.version>2.2.7.RELEASE</spring.boot.version>
         <!--        <releases-url>http://127.0.0.1:8081/repository/maven-public/</releases-url>-->
         <!--        <snapshots-url>http://127.0.0.1:8081/repository/maven-snapshots/</snapshots-url>-->
         <releases-url>http://10.113.75.27:8081/nexus/repository/maven-public/</releases-url>
