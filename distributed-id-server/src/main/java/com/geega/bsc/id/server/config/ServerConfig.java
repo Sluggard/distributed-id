@@ -13,4 +13,8 @@ public class ServerConfig {
 
     private Integer port;
 
+    private Integer processor;
+
+
+
 }

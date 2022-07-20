@@ -10,7 +10,7 @@ public class ConfigConst {
 
     public static final String BIND_PORT = "bind.port";
 
-    public static final String ZK_ADDRESS = "zk.address";
+    public static final String ZK_CONNECTION = "zk.connection";
 
     public static final String ZK_NAMESPACE = "zk.namespace";
 

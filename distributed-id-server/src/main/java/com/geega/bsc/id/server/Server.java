@@ -2,7 +2,9 @@ package com.geega.bsc.id.server;
 
 import com.geega.bsc.id.common.config.ZkConfig;
 import com.geega.bsc.id.common.sync.Sync;
+import com.geega.bsc.id.common.utils.ResourcesUtil;
 import com.geega.bsc.id.common.utils.SnowFlake;
+import com.geega.bsc.id.server.config.ConfigConst;
 import com.geega.bsc.id.server.config.ServerConfig;
 import com.geega.bsc.id.server.network.ServerAcceptor;
 import com.geega.bsc.id.server.network.ServerProcessor;
@@ -10,6 +12,7 @@ import com.geega.bsc.id.server.network.ServerRequestChannel;
 import com.geega.bsc.id.server.network.ServerRequestHandler;
 import com.geega.bsc.id.server.zk.ZkServer;
 import lombok.extern.slf4j.Slf4j;
+import java.util.Properties;
 
 @Slf4j
 public class Server {
@@ -19,19 +22,20 @@ public class Server {
         //同步组件
         Sync sync = new Sync();
 
+        final Properties properties = ResourcesUtil.getProperties("/application.properties");
+
         final ServerConfig serverConfig = new ServerConfig();
-        serverConfig.setIp("192.168.0.106");
-        serverConfig.setPort(9999);
+        serverConfig.setIp(properties.getProperty(ConfigConst.BIND_IP));
+        serverConfig.setPort(Integer.valueOf(properties.getProperty(ConfigConst.BIND_PORT)));
 
         ZkConfig zkConfig = new ZkConfig();
-        zkConfig.setNamespace("id");
-        zkConfig.setConnection("127.0.0.1:2181");
-        zkConfig.setSessionTimeoutMs(10000);
-        zkConfig.setConnectionTimeoutMs(10000);
+        zkConfig.setNamespace(properties.getProperty(ConfigConst.ZK_NAMESPACE));
+        zkConfig.setConnection(properties.getProperty(ConfigConst.ZK_CONNECTION));
+        zkConfig.setSessionTimeoutMs(Integer.valueOf(properties.getProperty(ConfigConst.ZK_SESSION_TIMEOUT_MS)));
+        zkConfig.setConnectionTimeoutMs(Integer.valueOf(properties.getProperty(ConfigConst.ZK_CONNECTION_TIMEOUT_MS)));
 
         //向zk注册，并定时心跳
         ZkServer zkServer = new ZkServer(serverConfig, zkConfig);
-        zkServer.init();
 
         ServerRequestChannel requestChannel = new ServerRequestChannel();
 

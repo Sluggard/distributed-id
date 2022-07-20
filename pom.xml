@@ -12,13 +12,16 @@
         <module>distributed-id-server</module>
         <module>distributed-id-common</module>
         <module>id-spring-boot-starter</module>
+        <module>id-spring-boot-starter-test</module>
     </modules>
 
     <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
         <!--lombok-->
         <lombok.version>1.18.24</lombok.version>
-<!--        <releases-url>http://127.0.0.1:8081/repository/maven-public/</releases-url>-->
-<!--        <snapshots-url>http://127.0.0.1:8081/repository/maven-snapshots/</snapshots-url>-->
+        <!--        <releases-url>http://127.0.0.1:8081/repository/maven-public/</releases-url>-->
+        <!--        <snapshots-url>http://127.0.0.1:8081/repository/maven-snapshots/</snapshots-url>-->
         <releases-url>http://10.113.75.27:8081/nexus/repository/maven-public/</releases-url>
         <snapshots-url>http://10.113.75.27:8081/nexus/repository/maven-snapshots/</snapshots-url>
     </properties>

@@ -54,8 +54,7 @@ public class ServerProcessor extends Thread {
         this.completedReceives = new ArrayList<>();
         this.stagedReceives = new HashMap<>();
         this.completedSends = new ArrayList<>();
-        init();
-        System.out.println("process-" + processorId + ",运行中");
+        this.init();
     }
 
     private void init() {
@@ -185,7 +184,6 @@ public class ServerProcessor extends Thread {
             channel = new DistributedIdChannel(id, transportLayer, maxReceiveSize);
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("Failed to create channel");
             throw new DistributedIdException(e);
         }
         return channel;

@@ -31,13 +31,14 @@ public class ZkServer {
     public ZkServer(ServerConfig serverConfig, ZkConfig zkConfig) {
         this.serverConfig = serverConfig;
         this.zkClient = new ZookeeperFactory(zkConfig).instance();
+        this.init();
     }
 
-    public void init() {
+    private void init() {
         //创建临时节点
         addEphemeralSequential();
         //创建临时节点（自增id）
-        addEhemeralSequentialWorkId();
+        addEphemeralSequentialWorkId();
         //定时上传心跳
         sendHeartbeat();
     }
@@ -63,7 +64,7 @@ public class ZkServer {
     /**
      * 创建临时节点（自增id）
      */
-    private void addEhemeralSequentialWorkId() {
+    private void addEphemeralSequentialWorkId() {
         try {
             final String nodePath = zkClient.create()
                     .creatingParentsIfNeeded()
