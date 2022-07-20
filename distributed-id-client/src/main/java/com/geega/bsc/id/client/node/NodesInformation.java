@@ -13,6 +13,8 @@ public class NodesInformation {
 
     private final CopyOnWriteArrayList<NodeAddress> nodes = new CopyOnWriteArrayList<>();
 
+    private final Integer serverNetworkPartitionTimeout = 15000;
+
     public List<NodeAddress> getNodes() {
         return this.nodes;
     }
@@ -20,20 +22,18 @@ public class NodesInformation {
     /**
      * 移除服务节点
      */
-    public synchronized void remove(String ip, Integer port) {
-        nodes.remove(NodeAddress.builder()
-                .ip(ip)
-                .port(port)
-                .lastUpdateTime(TimeUtil.now())
-                .build());
+    public synchronized void remove(NodeAddress nodeAddress) {
+        if (TimeUtil.now() - nodeAddress.getLastUpdateTime() > serverNetworkPartitionTimeout) {
+            nodes.remove(nodeAddress);
+        }
     }
 
     /**
      * 添加服务节点
      */
-    public synchronized void add(NodeAddress nodeAddress) {
-        if (!nodes.contains(nodeAddress)) {
-            nodes.add(nodeAddress);
+    public synchronized void update(NodeAddress nodeAddress) {
+        if (nodes.contains(nodeAddress)) {
+
         }
     }
 

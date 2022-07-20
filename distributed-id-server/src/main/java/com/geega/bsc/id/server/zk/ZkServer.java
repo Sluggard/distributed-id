@@ -22,7 +22,7 @@ public class ZkServer {
 
     private final Logger LOGGER = LoggerFactory.getLogger(ZkServer.class);
 
-    private Integer workId;
+    private volatile Integer workId;
 
     private final ServerConfig serverConfig;
 

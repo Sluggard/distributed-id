@@ -70,8 +70,10 @@ public class ZkClient {
                         break;
                     case CHILD_REMOVED:
                         LOGGER.info("删除服务节点：{}", event.getData());
-                        removeNode(path);
+                        removeNode(path, bytes);
                         break;
+                    case CHILD_UPDATED:
+
                     default:
                         break;
                 }
@@ -104,13 +106,12 @@ public class ZkClient {
     }
 
     private void addNode(String zkNodePath) {
-        nodesInformation.add(getNodeAddress(zkNodePath));
+        nodesInformation.update(getNodeAddress(zkNodePath));
     }
 
-    private void removeNode(String zkNodePath) {
-        final String address = zkNodePath.replaceAll(ZkTreeConstant.ZK_SERVER_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR, "");
-        final String[] splits = address.split(":");
-        nodesInformation.remove(splits[0], Integer.valueOf(splits[1]));
+    private void removeNode(String zkNodePath, byte[] bytes) {
+        NodeAddress nodeAddress = JSON.parseObject(new String(bytes), NodeAddress.class);
+        nodesInformation.remove(nodeAddress);
     }
 
     private NodeAddress getNodeAddress(String zkNodePath) {
