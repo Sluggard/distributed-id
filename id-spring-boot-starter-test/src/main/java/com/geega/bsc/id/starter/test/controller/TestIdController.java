@@ -7,14 +7,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 文档Controller
+ * Controller
  *
  * @author Jun.An3
  * @date 2022/05/11
  */
 @RestController
 @RequestMapping("/api/v1/id")
-public class IdController {
+public class TestIdController {
 
     @Autowired
     private IdClient idClient;

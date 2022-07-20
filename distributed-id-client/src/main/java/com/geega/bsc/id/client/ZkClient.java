@@ -2,10 +2,11 @@ package com.geega.bsc.id.client;
 
 import com.alibaba.fastjson.JSON;
 import com.geega.bsc.id.client.node.NodesInformation;
+import com.geega.bsc.id.common.address.NodeAddress;
 import com.geega.bsc.id.common.config.ZkConfig;
 import com.geega.bsc.id.common.constant.ZkTreeConstant;
-import com.geega.bsc.id.common.address.NodeAddress;
 import com.geega.bsc.id.common.factory.ZookeeperFactory;
+import com.geega.bsc.id.common.utils.SleepUtil;
 import com.geega.bsc.id.common.utils.TimeUtil;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
@@ -25,6 +26,9 @@ public class ZkClient {
 
     private final ZkConfig zkConfig;
 
+    @SuppressWarnings("FieldCanBeLocal")
+    private final Integer zkInitWaitTimeoutMs = 5000;
+
     public ZkClient(ZkConfig zkConfig) {
         this.zkConfig = zkConfig;
         this.nodesInformation = new NodesInformation();
@@ -37,6 +41,7 @@ public class ZkClient {
 
     private void start() {
         try {
+
             //创建zk客户端
             final ZookeeperFactory factory = new ZookeeperFactory(this.zkConfig);
             final CuratorFramework zkClient = factory.instance();
@@ -56,6 +61,7 @@ public class ZkClient {
             //监听子节点的数据变化
             nodeCache.getListenable().addListener((curatorFramework, event) -> {
                 String path = event.getData().getPath();
+                //noinspection unused
                 byte[] bytes = event.getData().getData();
                 switch (event.getType()) {
                     case CHILD_ADDED:
@@ -67,27 +73,33 @@ public class ZkClient {
                         removeNode(path);
                         break;
                     default:
-                        LOGGER.info("其他事件：{}", event.getData());
                         break;
                 }
             });
+            //等待最多默认5s，获取不到ID生成服务，就跑异常
+            waitTimeoutThrow();
 
-            long start = TimeUtil.now();
-            while (nodesInformation.isNotReady()) {
-                if (TimeUtil.now() - start >= 5000) {
-                    break;
-                }
-                //稍微等待一下服务节点的注册
-                try {
-                    //noinspection BusyWait
-                    Thread.sleep(500);
-                } catch (Exception ignored) {
-                    //do nothing
-                }
-            }
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             LOGGER.error("初始化zk失败", e);
             throw new RuntimeException("初始化zk失败");
+        }
+    }
+
+    private void waitTimeoutThrow() {
+        boolean success = false;
+        long now = TimeUtil.now();
+        while (TimeUtil.now() - now <= zkInitWaitTimeoutMs) {
+            if (getNodes().size() == 0) {
+                SleepUtil.waitMs(1000);
+            } else {
+                success = true;
+                break;
+            }
+        }
+        if (!success) {
+            throw new RuntimeException("获取ID生成服务节点失败");
         }
     }
 

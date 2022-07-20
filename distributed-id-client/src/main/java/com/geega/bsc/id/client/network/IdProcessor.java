@@ -1,5 +1,6 @@
 package com.geega.bsc.id.client.network;
 
+import com.alibaba.fastjson.JSON;
 import com.geega.bsc.id.client.IdClient;
 import com.geega.bsc.id.common.address.NodeAddress;
 import com.geega.bsc.id.common.exception.DistributedIdException;
@@ -7,7 +8,8 @@ import com.geega.bsc.id.common.network.DistributedIdChannel;
 import com.geega.bsc.id.common.network.IdGeneratorTransportLayer;
 import com.geega.bsc.id.common.network.NetworkReceive;
 import com.geega.bsc.id.common.utils.ByteBufferUtil;
-import com.alibaba.fastjson.JSON;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -25,6 +27,8 @@ import java.util.concurrent.Executors;
  * @author Jun.An3
  */
 public class IdProcessor {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(IdProcessor.class);
 
     private final String id;
 
@@ -49,6 +53,7 @@ public class IdProcessor {
         this.completedReceives = new ArrayList<>();
         this.stagedReceives = new ArrayDeque<>();
         this.init(nodeAddress.getIp(), nodeAddress.getPort());
+        //noinspection AlibabaThreadPoolCreation
         Executors.newSingleThreadExecutor().execute(new Sender());
     }
 
@@ -87,7 +92,7 @@ public class IdProcessor {
                                 removeInterestOps(key, SelectionKey.OP_CONNECT);
                                 addInterestOps(key, SelectionKey.OP_READ);
                                 //这里不增加写事件，当需要写时，增加写事件
-                                System.out.println("建立好连接:" + System.currentTimeMillis());
+                                LOGGER.info("ID生成服务建立连接成功");
                                 break;
                             } else {
                                 key.cancel();
@@ -124,13 +129,11 @@ public class IdProcessor {
                         SelectionKey key = keysIterator.next();
                         keysIterator.remove();
                         if (key.isReadable() && !hasStagedReceive()) {
-                            System.out.println("进入读事件");
                             NetworkReceive networkReceive;
                             while ((networkReceive = distributedIdChannel.read()) != null) {
                                 addToStagedReceives(networkReceive);
                             }
                         } else if (key.isWritable()) {
-                            System.out.println("进入写事件");
                             distributedIdChannel.write();
                         }
                         if (!key.isValid()) {
@@ -153,7 +156,6 @@ public class IdProcessor {
             channel.close();
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("关闭异常");
         }
         this.stagedReceives.clear();
     }
@@ -188,7 +190,6 @@ public class IdProcessor {
         }
     }
 
-
     private void addToCompletedReceives() {
         if (!this.stagedReceives.isEmpty()) {
             Iterator<NetworkReceive> iterator = this.stagedReceives.iterator();
@@ -201,14 +202,12 @@ public class IdProcessor {
         }
     }
 
-    private DistributedIdChannel buildChannel(String id, SelectionKey key, int maxReceiveSize) throws DistributedIdException {
+    private DistributedIdChannel buildChannel(String id, SelectionKey key, @SuppressWarnings("SameParameterValue") int maxReceiveSize) throws DistributedIdException {
         DistributedIdChannel channel;
         try {
             IdGeneratorTransportLayer transportLayer = new IdGeneratorTransportLayer(key);
             channel = new DistributedIdChannel(id, transportLayer, maxReceiveSize);
         } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("Failed to create channel");
             throw new DistributedIdException(e);
         }
         return channel;

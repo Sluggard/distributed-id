@@ -1,14 +1,18 @@
 package com.geega.bsc.id.common.utils;
 
 
-import com.geega.bsc.id.common.network.ByteBufferSend;
 import com.alibaba.fastjson.JSON;
+import com.geega.bsc.id.common.network.ByteBufferSend;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+/**
+ * @author Jun.An3
+ * @date 2022/07/20
+ */
 public class ByteBufferUtil {
 
     private static final CharsetDecoder DECODER = StandardCharsets.UTF_8.newDecoder();

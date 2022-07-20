@@ -13,10 +13,6 @@ public class NodesInformation {
 
     private final CopyOnWriteArrayList<NodeAddress> nodes = new CopyOnWriteArrayList<>();
 
-    public boolean isNotReady() {
-        return nodes.size() == 0;
-    }
-
     public List<NodeAddress> getNodes() {
         return this.nodes;
     }
@@ -24,24 +20,20 @@ public class NodesInformation {
     /**
      * 移除服务节点
      */
-    public void remove(String ip, Integer port) {
-        synchronized (this) {
-            nodes.remove(NodeAddress.builder()
-                    .ip(ip)
-                    .port(port)
-                    .lastUpdateTime(TimeUtil.now())
-                    .build());
-        }
+    public synchronized void remove(String ip, Integer port) {
+        nodes.remove(NodeAddress.builder()
+                .ip(ip)
+                .port(port)
+                .lastUpdateTime(TimeUtil.now())
+                .build());
     }
 
     /**
      * 添加服务节点
      */
-    public void add(NodeAddress nodeAddress) {
-        synchronized (this) {
-            if (!nodes.contains(nodeAddress)) {
-                nodes.add(nodeAddress);
-            }
+    public synchronized void add(NodeAddress nodeAddress) {
+        if (!nodes.contains(nodeAddress)) {
+            nodes.add(nodeAddress);
         }
     }
 
