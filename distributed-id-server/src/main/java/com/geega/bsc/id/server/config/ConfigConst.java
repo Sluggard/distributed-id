@@ -10,6 +10,10 @@ public class ConfigConst {
 
     public static final String BIND_PORT = "bind.port";
 
+    public static final String NIO_PROCESSOR = "nio.processor";
+
+    public static final String ID_DATACENTER = "id.datacenter";
+
     public static final String ZK_CONNECTION = "zk.connection";
 
     public static final String ZK_NAMESPACE = "zk.namespace";

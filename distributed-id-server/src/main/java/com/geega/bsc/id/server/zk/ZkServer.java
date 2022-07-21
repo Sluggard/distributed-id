@@ -28,10 +28,20 @@ public class ZkServer {
 
     private final CuratorFramework zkClient;
 
-    public ZkServer(ServerConfig serverConfig, ZkConfig zkConfig) {
+    public ZkServer(ServerConfig serverConfig) {
+        assert serverConfig != null;
+        this.zkClient = new ZookeeperFactory(getZkConfig(serverConfig)).instance();
         this.serverConfig = serverConfig;
-        this.zkClient = new ZookeeperFactory(zkConfig).instance();
         this.init();
+    }
+
+    private ZkConfig getZkConfig(ServerConfig serverConfig) {
+        ZkConfig zkConfig = new ZkConfig();
+        zkConfig.setNamespace(serverConfig.getZkNamespace());
+        zkConfig.setConnection(serverConfig.getZkConnection());
+        zkConfig.setConnectionTimeoutMs(serverConfig.getZkConnectionTimeoutMs());
+        zkConfig.setSessionTimeoutMs(serverConfig.getZkSessionTimeoutMs());
+        return zkConfig;
     }
 
     private void init() {

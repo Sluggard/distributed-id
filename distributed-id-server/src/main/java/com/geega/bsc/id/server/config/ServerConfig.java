@@ -15,6 +15,14 @@ public class ServerConfig {
 
     private Integer processor;
 
+    private Long idDatacenter;
 
+    private String zkNamespace;
+
+    private String zkConnection;
+
+    private Integer zkSessionTimeoutMs;
+
+    private Integer zkConnectionTimeoutMs;
 
 }

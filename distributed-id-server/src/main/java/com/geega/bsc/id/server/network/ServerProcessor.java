@@ -6,6 +6,8 @@ import com.geega.bsc.id.common.network.DistributedIdChannel;
 import com.geega.bsc.id.common.network.IdGeneratorTransportLayer;
 import com.geega.bsc.id.common.network.NetworkReceive;
 import com.geega.bsc.id.common.network.Send;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
@@ -25,6 +27,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public class ServerProcessor extends Thread {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServerProcessor.class);
+
     private final ConcurrentHashMap<String, DistributedIdChannel> channels;
 
     private final List<NetworkReceive> completedReceives;
@@ -35,18 +39,18 @@ public class ServerProcessor extends Thread {
 
     private final ConcurrentLinkedQueue<SocketChannel> newConnections;
 
-    private final int processorId;
-
-    private final ServerRequestChannel requestChannel;
+    private final ServerRequestCache requestChannel;
 
     private Selector selector;
+
+    private final int processorId;
 
     public void addChannel(SocketChannel channel) {
         this.newConnections.add(channel);
         selector.wakeup();
     }
 
-    public ServerProcessor(int processorId, ServerRequestChannel requestChannel) {
+    public ServerProcessor(int processorId, ServerRequestCache requestChannel) {
         this.processorId = processorId;
         this.requestChannel = requestChannel;
         this.channels = new ConcurrentHashMap<>();
@@ -94,7 +98,6 @@ public class ServerProcessor extends Thread {
             while (iterator.hasNext()) {
                 NetworkReceive completedReceive = iterator.next();
                 iterator.remove();
-
                 DistributedIdChannel distributedIdChannel = channels.get(completedReceive.source());
                 Request request = new Request(completedReceive.payload(), distributedIdChannel.id(), processorId);
                 requestChannel.addRequest(request);
@@ -164,20 +167,19 @@ public class ServerProcessor extends Thread {
                     String remoteHost = channel.socket().getInetAddress().getHostAddress();
                     int remotePort = channel.socket().getPort();
                     String connectionId = ConnectionIdUtil.getConnectionId(localHost, localPort, remoteHost, remotePort);
-                    System.out.println("[" + connectionId + "],连接已建立");
-
+                    LOGGER.info("[{}],连接已建立", connectionId);
                     SelectionKey selectionKey = channel.register(selector, SelectionKey.OP_READ);
                     DistributedIdChannel distributedIdChannel = buildChannel(connectionId, selectionKey, 1024);
                     selectionKey.attach(distributedIdChannel);
                     this.channels.put(connectionId, distributedIdChannel);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.error("创建连接失败", e);
             }
         }
     }
 
-    private DistributedIdChannel buildChannel(String id, SelectionKey key, int maxReceiveSize) throws DistributedIdException {
+    private DistributedIdChannel buildChannel(String id, SelectionKey key, @SuppressWarnings("SameParameterValue") int maxReceiveSize) throws DistributedIdException {
         DistributedIdChannel channel;
         try {
             IdGeneratorTransportLayer transportLayer = new IdGeneratorTransportLayer(key);

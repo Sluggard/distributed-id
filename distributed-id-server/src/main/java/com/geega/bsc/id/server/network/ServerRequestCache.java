@@ -9,13 +9,13 @@ import java.util.concurrent.TimeUnit;
  * @author Jun.An3
  * @date 2022/07/18
  */
-public class ServerRequestChannel {
+public class ServerRequestCache {
 
     private final ArrayBlockingQueue<Request> requestQueue;
 
     private final ConcurrentHashMap<Integer, LinkedBlockingQueue<Response>> processorResponseQueue;
 
-    public ServerRequestChannel() {
+    public ServerRequestCache() {
         this.requestQueue = new ArrayBlockingQueue<>(16);
         this.processorResponseQueue = new ConcurrentHashMap<>();
     }

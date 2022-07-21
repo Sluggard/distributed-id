@@ -19,7 +19,7 @@ public class ServerRequestHandler extends Thread {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerRequestHandler.class);
 
-    private final ServerRequestChannel requestChannel;
+    private final ServerRequestCache requestChannel;
 
     private final AtomicInteger threadIndex = new AtomicInteger(0);
 
@@ -35,7 +35,7 @@ public class ServerRequestHandler extends Thread {
             (r, executor) -> LOGGER.info("丢弃")
     );
 
-    public ServerRequestHandler(ServerRequestChannel requestChannel, SnowFlake snowFlake) {
+    public ServerRequestHandler(ServerRequestCache requestChannel, SnowFlake snowFlake) {
         this.requestChannel = requestChannel;
         this.snowFlake = snowFlake;
     }
