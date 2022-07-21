@@ -57,7 +57,7 @@ public class ZkServer {
      * 定时上传心跳
      */
     private void sendHeartbeat() {
-        ZkHeartBeatProcessor register = new ZkHeartBeatProcessor();
+        ZkHeartBeat register = new ZkHeartBeat();
         register.sendHeartBeat(() -> {
             try {
                 Stat stat = zkClient.setData().forPath(ZkTreeConstant.ZK_SERVER_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + getAddress(serverConfig.getIp(), serverConfig.getPort()), getDataBytes(serverConfig.getIp(), serverConfig.getPort()));

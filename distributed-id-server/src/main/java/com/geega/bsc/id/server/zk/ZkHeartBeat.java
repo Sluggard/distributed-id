@@ -5,20 +5,18 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * todo 类描述
- *
  * @author Jun.An3
  * @date 2022/07/11
  */
-public class ZkHeartBeatProcessor {
+public class ZkHeartBeat {
 
     private final ScheduledExecutorService executorService;
 
-    public ZkHeartBeatProcessor() {
+    public ZkHeartBeat() {
         //初始化单线程定时任务执行器
         //noinspection AlibabaThreadPoolCreation
         this.executorService = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread thread = new Thread(r, "heartbeat-schedule");
+            Thread thread = new Thread(r, "zk-heartbeat-schedule");
             thread.setDaemon(true);
             return thread;
         });

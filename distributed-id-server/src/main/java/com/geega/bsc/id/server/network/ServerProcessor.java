@@ -135,9 +135,14 @@ public class ServerProcessor extends Thread {
                         this.completedSends.add(send);
                     }
                 }
+                if (!selectionKey.isValid()) {
+                    distributedIdChannel.close();
+                    distributedIdChannel.disconnect();
+                    LOGGER.warn("断开此连接:{}", distributedIdChannel.socketDescription());
+                }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("读写错误", e);
         }
     }
 

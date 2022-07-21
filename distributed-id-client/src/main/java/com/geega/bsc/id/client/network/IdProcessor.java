@@ -144,7 +144,7 @@ public class IdProcessor {
                     addToCompletedReceives();
                     handleCompletedReceives();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOGGER.error("读写错误", e);
                 }
             }
         }
