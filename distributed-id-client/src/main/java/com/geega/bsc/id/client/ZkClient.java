@@ -5,6 +5,7 @@ import com.geega.bsc.id.client.node.NodesInformation;
 import com.geega.bsc.id.common.address.NodeAddress;
 import com.geega.bsc.id.common.config.ZkConfig;
 import com.geega.bsc.id.common.constant.ZkTreeConstant;
+import com.geega.bsc.id.common.exception.DistributedIdException;
 import com.geega.bsc.id.common.factory.ZookeeperFactory;
 import com.geega.bsc.id.common.utils.SleepUtil;
 import com.geega.bsc.id.common.utils.TimeUtil;
@@ -83,7 +84,7 @@ public class ZkClient {
             throw e;
         } catch (Exception e) {
             LOGGER.error("初始化zk失败", e);
-            throw new RuntimeException("初始化zk失败");
+            throw new DistributedIdException("初始化zk失败",e);
         }
     }
 
@@ -99,7 +100,7 @@ public class ZkClient {
             }
         }
         if (!success) {
-            throw new RuntimeException("获取ID生成服务节点失败");
+            throw new DistributedIdException("获取ID生成服务节点失败");
         }
     }
 

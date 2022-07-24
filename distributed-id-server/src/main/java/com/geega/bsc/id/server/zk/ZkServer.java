@@ -6,7 +6,6 @@ import com.geega.bsc.id.common.config.ZkConfig;
 import com.geega.bsc.id.common.constant.ZkTreeConstant;
 import com.geega.bsc.id.common.exception.DistributedIdException;
 import com.geega.bsc.id.common.factory.ZookeeperFactory;
-import com.geega.bsc.id.common.utils.SleepUtil;
 import com.geega.bsc.id.common.utils.TimeUtil;
 import com.geega.bsc.id.server.config.ServerConfig;
 import org.apache.curator.framework.CuratorFramework;
@@ -82,8 +81,7 @@ public class ZkServer {
             workId = generateWorkId(nodePath);
             LOGGER.info("创建的临时顺序节点：{}", nodePath);
         } catch (Exception e) {
-            LOGGER.error("创建临时节点失败", e);
-            throw new RuntimeException("创建的临时顺序节点");
+            throw new DistributedIdException("创建的临时顺序节点",e);
         }
     }
 
@@ -105,8 +103,7 @@ public class ZkServer {
                 LOGGER.info("设置临时节点数据:{}", nodePath);
             }
         } catch (Exception e) {
-            LOGGER.error("创建临时节点失败", e);
-            throw new RuntimeException("创建临时节点失败");
+            throw new DistributedIdException("创建临时节点失败", e);
         }
     }
 

@@ -1,6 +1,7 @@
 package com.geega.bsc.id.common.network;
 
 import cn.hutool.core.builder.HashCodeBuilder;
+import com.geega.bsc.id.common.exception.DistributedIdException;
 import com.geega.bsc.id.common.utils.ByteUtil;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -100,7 +101,7 @@ public class DistributedIdChannel {
 
     public void setSend(Send send) {
         if (this.send != null) {
-            throw new IllegalStateException("Attempt to begin a send operation with prior send operation still in progress.");
+            throw new DistributedIdException("Attempt to begin a send operation with prior send operation still in progress.");
         }
         this.send = send;
         this.transportLayer.addInterestOps(SelectionKey.OP_WRITE);
