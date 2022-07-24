@@ -2,6 +2,7 @@ package com.geega.bsc.id.server;
 
 import com.geega.bsc.id.common.exception.DistributedIdException;
 import com.geega.bsc.id.common.sync.Sync;
+import com.geega.bsc.id.common.utils.IpUtil;
 import com.geega.bsc.id.common.utils.ResourcesUtil;
 import com.geega.bsc.id.common.utils.SnowFlake;
 import com.geega.bsc.id.server.config.ConfigConst;
@@ -51,11 +52,12 @@ public class Server {
             ServerConfig serverConfig = new ServerConfig();
 
             Properties properties = ResourcesUtil.getProperties("/application.properties");
-
-            assert properties.getProperty(ConfigConst.BIND_IP) != null;
+            String ip = properties.getProperty(ConfigConst.BIND_IP, IpUtil.getIp());
+            log.info("本机ip:{}", ip);
+            assert ip != null;
             assert properties.getProperty(ConfigConst.BIND_PORT) != null;
 
-            serverConfig.setIp(properties.getProperty(ConfigConst.BIND_IP));
+            serverConfig.setIp(ip);
             serverConfig.setPort(Integer.valueOf(properties.getProperty(ConfigConst.BIND_PORT)));
             serverConfig.setProcessor(Integer.valueOf(properties.getProperty(ConfigConst.NIO_PROCESSOR, "3")));
             serverConfig.setIdDatacenter(Long.valueOf(properties.getProperty(ConfigConst.ID_DATACENTER, "1")));
