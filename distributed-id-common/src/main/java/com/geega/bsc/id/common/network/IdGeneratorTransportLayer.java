@@ -21,6 +21,10 @@ public class IdGeneratorTransportLayer implements TransportLayer {
         this.socketChannel = (SocketChannel) key.channel();
     }
 
+    private boolean keyIsValid() {
+        return this.key.isValid();
+    }
+
     @Override
     public boolean ready() {
         return true;
@@ -109,12 +113,16 @@ public class IdGeneratorTransportLayer implements TransportLayer {
 
     @Override
     public void addInterestOps(int ops) {
-        this.key.interestOps(this.key.interestOps() | ops);
+        if (keyIsValid()) {
+            this.key.interestOps(this.key.interestOps() | ops);
+        }
     }
 
     @Override
     public void removeInterestOps(int ops) {
-        this.key.interestOps(this.key.interestOps() & ~ops);
+        if (keyIsValid()) {
+            this.key.interestOps(this.key.interestOps() & ~ops);
+        }
     }
 
     @Override

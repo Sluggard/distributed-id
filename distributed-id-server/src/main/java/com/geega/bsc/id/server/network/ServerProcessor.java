@@ -1,23 +1,15 @@
 package com.geega.bsc.id.server.network;
 
 import com.geega.bsc.id.common.exception.DistributedIdException;
-import com.geega.bsc.id.common.network.ConnectionIdUtil;
-import com.geega.bsc.id.common.network.DistributedIdChannel;
-import com.geega.bsc.id.common.network.IdGeneratorTransportLayer;
-import com.geega.bsc.id.common.network.NetworkReceive;
-import com.geega.bsc.id.common.network.Send;
+import com.geega.bsc.id.common.network.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -39,6 +31,8 @@ public class ServerProcessor extends Thread {
 
     private final ConcurrentLinkedQueue<SocketChannel> newConnections;
 
+    private final ConcurrentLinkedQueue<DistributedIdChannel> waitCloseConnections;
+
     private final ServerRequestCache requestChannel;
 
     private Selector selector;
@@ -55,6 +49,7 @@ public class ServerProcessor extends Thread {
         this.requestChannel = requestChannel;
         this.channels = new ConcurrentHashMap<>();
         this.newConnections = new ConcurrentLinkedQueue<>();
+        this.waitCloseConnections = new ConcurrentLinkedQueue<>();
         this.completedReceives = new ArrayList<>();
         this.stagedReceives = new HashMap<>();
         this.completedSends = new ArrayList<>();
@@ -85,6 +80,7 @@ public class ServerProcessor extends Thread {
                 processCompletedReceives();
                 //处理发送数据成功
                 processCompletedSends();
+                //处理待关闭连接
                 processDisconnected();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -112,37 +108,41 @@ public class ServerProcessor extends Thread {
 
             Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
             while (iterator.hasNext()) {
+
                 SelectionKey selectionKey = iterator.next();
                 iterator.remove();
 
                 DistributedIdChannel distributedIdChannel = (DistributedIdChannel) selectionKey.attachment();
+                try {
+                    if (selectionKey.isConnectable()) {
+                        if (!distributedIdChannel.finishConnect()) {
+                            continue;
+                        }
+                    }
 
-                if (selectionKey.isConnectable()) {
-                    if (!distributedIdChannel.finishConnect()) {
-                        continue;
+                    if (selectionKey.isReadable() && !hasStagedReceive(distributedIdChannel)) {
+                        NetworkReceive networkReceive;
+                        while ((networkReceive = distributedIdChannel.read()) != null) {
+                            addToStagedReceives(distributedIdChannel, networkReceive);
+                        }
                     }
-                }
-
-                if (selectionKey.isReadable() && !hasStagedReceive(distributedIdChannel)) {
-                    NetworkReceive networkReceive;
-                    while ((networkReceive = distributedIdChannel.read()) != null) {
-                        addToStagedReceives(distributedIdChannel, networkReceive);
+                    if (selectionKey.isWritable()) {
+                        Send send = distributedIdChannel.write();
+                        if (send != null) {
+                            this.completedSends.add(send);
+                        }
                     }
-                }
-                if (selectionKey.isWritable()) {
-                    Send send = distributedIdChannel.write();
-                    if (send != null) {
-                        this.completedSends.add(send);
+                    if (!selectionKey.isValid()) {
+                        this.waitCloseConnections.offer(distributedIdChannel);
                     }
-                }
-                if (!selectionKey.isValid()) {
-                    distributedIdChannel.close();
-                    distributedIdChannel.disconnect();
-                    LOGGER.warn("断开此连接:{}", distributedIdChannel.socketDescription());
+                } catch (IOException exception) {
+                    this.waitCloseConnections.offer(distributedIdChannel);
+                } catch (Exception e) {
+                    LOGGER.error("未知异常", e);
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("读写错误", e);
+            LOGGER.error("未知异常", e);
         }
     }
 
@@ -206,7 +206,17 @@ public class ServerProcessor extends Thread {
 
     //todo
     private void processDisconnected() {
-
+        while (!waitCloseConnections.isEmpty()) {
+            DistributedIdChannel distributedIdChannel = waitCloseConnections.poll();
+            try {
+                if (distributedIdChannel != null) {
+                    LOGGER.warn("关闭异常连接:{}", distributedIdChannel.socketDescription());
+                    distributedIdChannel.close();
+                }
+            } catch (Exception e) {
+                LOGGER.error("关闭连接异常", e);
+            }
+        }
     }
 
     private void addToStagedReceives(DistributedIdChannel channel, NetworkReceive receive) {

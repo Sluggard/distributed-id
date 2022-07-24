@@ -4,7 +4,9 @@ import com.alibaba.fastjson.JSON;
 import com.geega.bsc.id.common.address.NodeAddress;
 import com.geega.bsc.id.common.config.ZkConfig;
 import com.geega.bsc.id.common.constant.ZkTreeConstant;
+import com.geega.bsc.id.common.exception.DistributedIdException;
 import com.geega.bsc.id.common.factory.ZookeeperFactory;
+import com.geega.bsc.id.common.utils.SleepUtil;
 import com.geega.bsc.id.common.utils.TimeUtil;
 import com.geega.bsc.id.server.config.ServerConfig;
 import org.apache.curator.framework.CuratorFramework;
@@ -76,10 +78,7 @@ public class ZkServer {
      */
     private void addEphemeralSequentialWorkId() {
         try {
-            final String nodePath = zkClient.create()
-                    .creatingParentsIfNeeded()
-                    .withMode(CreateMode.EPHEMERAL_SEQUENTIAL)
-                    .forPath(ZkTreeConstant.ZK_WORK_ID_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + "workid-", getDataBytes(serverConfig.getIp(), serverConfig.getPort()));
+            final String nodePath = zkClient.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(ZkTreeConstant.ZK_WORK_ID_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + "workid-", getDataBytes(serverConfig.getIp(), serverConfig.getPort()));
             workId = generateWorkId(nodePath);
             LOGGER.info("创建的临时顺序节点：{}", nodePath);
         } catch (Exception e) {
@@ -89,18 +88,23 @@ public class ZkServer {
     }
 
     /**
-     * 创建临时节点
+     * 创建临时服务节点
      */
     private void addEphemeralSequential() {
         try {
-            final String nodePath = zkClient.create()
-                    .creatingParentsIfNeeded()
-                    .withMode(CreateMode.EPHEMERAL)
-                    .forPath(ZkTreeConstant.ZK_SERVER_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + getAddress(serverConfig.getIp(), serverConfig.getPort()), getDataBytes(serverConfig.getIp(), serverConfig.getPort()));
-            LOGGER.info("创建的临时节点：{}", nodePath);
+            final String nodePath = zkClient.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(ZkTreeConstant.ZK_SERVER_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + getAddress(serverConfig.getIp(), serverConfig.getPort()), getDataBytes(serverConfig.getIp(), serverConfig.getPort()));
+            LOGGER.info("创建临时服务节点：{}", nodePath);
+        } catch (KeeperException.NodeExistsException nodeExistsException) {
+            try {
+                //休眠10s
+                SleepUtil.waitMs(10000);
+                final String nodePath = zkClient.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(ZkTreeConstant.ZK_SERVER_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + getAddress(serverConfig.getIp(), serverConfig.getPort()), getDataBytes(serverConfig.getIp(), serverConfig.getPort()));
+                LOGGER.info("再次创建临时服务节点：{}", nodePath);
+            } catch (Exception e) {
+                throw new DistributedIdException("临时服务节点存在,创建失败,请稍后再试", e);
+            }
         } catch (Exception e) {
-            LOGGER.error("创建临时节点失败", e);
-            throw new RuntimeException("创建临时节点失败");
+            throw new DistributedIdException("临时服务节点存在,创建失败,请稍后再试", e);
         }
     }
 
@@ -118,11 +122,7 @@ public class ZkServer {
     }
 
     private byte[] getDataBytes(String ip, int port) {
-        final NodeAddress netAddress = NodeAddress.builder()
-                .ip(ip)
-                .port(port)
-                .lastUpdateTime(TimeUtil.now())
-                .build();
+        final NodeAddress netAddress = NodeAddress.builder().ip(ip).port(port).lastUpdateTime(TimeUtil.now()).build();
         return JSON.toJSONString(netAddress).getBytes();
     }
 
