@@ -92,19 +92,21 @@ public class ZkServer {
      */
     private void addEphemeralSequential() {
         try {
-            final String nodePath = zkClient.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(ZkTreeConstant.ZK_SERVER_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + getAddress(serverConfig.getIp(), serverConfig.getPort()), getDataBytes(serverConfig.getIp(), serverConfig.getPort()));
-            LOGGER.info("创建临时服务节点：{}", nodePath);
-        } catch (KeeperException.NodeExistsException nodeExistsException) {
-            try {
-                //休眠10s
-                SleepUtil.waitMs(10000);
-                final String nodePath = zkClient.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(ZkTreeConstant.ZK_SERVER_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + getAddress(serverConfig.getIp(), serverConfig.getPort()), getDataBytes(serverConfig.getIp(), serverConfig.getPort()));
-                LOGGER.info("再次创建临时服务节点：{}", nodePath);
-            } catch (Exception e) {
-                throw new DistributedIdException("临时服务节点存在,创建失败,请稍后再试", e);
+            String nodePath = ZkTreeConstant.ZK_SERVER_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + getAddress(serverConfig.getIp(), serverConfig.getPort());
+            byte[] data = getDataBytes(serverConfig.getIp(), serverConfig.getPort());
+            if (zkClient.checkExists().creatingParentsIfNeeded().forPath(nodePath) == null) {
+                nodePath = zkClient.create()
+                        .creatingParentsIfNeeded()
+                        .withMode(CreateMode.EPHEMERAL)
+                        .forPath(nodePath, data);
+                LOGGER.info("创建的临时节点：{}", nodePath);
+            } else {
+                zkClient.setData().forPath(nodePath, data);
+                LOGGER.info("设置临时节点数据:{}", nodePath);
             }
         } catch (Exception e) {
-            throw new DistributedIdException("临时服务节点存在,创建失败,请稍后再试", e);
+            LOGGER.error("创建临时节点失败", e);
+            throw new RuntimeException("创建临时节点失败");
         }
     }
 
