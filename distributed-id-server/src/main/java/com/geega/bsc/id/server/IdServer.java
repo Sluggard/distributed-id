@@ -57,13 +57,18 @@ public class IdServer {
                 ip = IpUtil.getIp();
                 log.info("本机ip:{}", ip);
             }
-
             assert ip != null;
             assert !"".equals(ip);
-            assert properties.getProperty(ConfigConst.BIND_PORT) != null;
+
+            String port = System.getProperty("bind.port");
+            if (port == null || "".equals(port)){
+                port = properties.getProperty(ConfigConst.BIND_PORT);
+            }
+            assert port != null;
+            assert !"".equals(port);
 
             serverConfig.setIp(ip);
-            serverConfig.setPort(Integer.valueOf(properties.getProperty(ConfigConst.BIND_PORT)));
+            serverConfig.setPort(Integer.valueOf(port));
             serverConfig.setProcessor(Integer.valueOf(properties.getProperty(ConfigConst.NIO_PROCESSOR, "3")));
             serverConfig.setIdDatacenter(Long.valueOf(properties.getProperty(ConfigConst.ID_DATACENTER, "1")));
             serverConfig.setZkConnection(properties.getProperty(ConfigConst.ZK_CONNECTION, "127.0.0.1:2181"));
