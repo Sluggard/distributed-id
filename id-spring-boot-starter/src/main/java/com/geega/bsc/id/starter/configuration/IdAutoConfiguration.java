@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Configuration;
  * @date 2022/07/19
  */
 @Configuration
-@EnableConfigurationProperties({ZkProperties.class})
+@EnableConfigurationProperties(value = {ZkProperties.class, CacheProperties.class})
 public class IdAutoConfiguration {
 
     @Bean

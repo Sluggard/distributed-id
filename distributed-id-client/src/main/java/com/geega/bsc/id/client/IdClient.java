@@ -97,7 +97,7 @@ public class IdClient {
             if (idQueue.size() == 0) {
                 isExpanding.set(false);
             }
-            if (idQueue.size() <= trigger && !isExpanding.get()) {
+            if (idQueue.size() < trigger && !isExpanding.get()) {
                 if (isExpanding.compareAndSet(false, true)) {
                     executeOnceAsync(expandNum);
                 }
