@@ -7,6 +7,7 @@ import com.geega.bsc.id.common.exception.DistributedIdException;
 import com.geega.bsc.id.common.network.DistributedIdChannel;
 import com.geega.bsc.id.common.network.IdGeneratorTransportLayer;
 import com.geega.bsc.id.common.network.NetworkReceive;
+import com.geega.bsc.id.common.utils.AddressUtil;
 import com.geega.bsc.id.common.utils.ByteBufferUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,10 +22,12 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
  * @author Jun.An3
+ * @date 2022/07/25
  */
 public class IdProcessor {
 
@@ -47,17 +50,23 @@ public class IdProcessor {
 
     private final Deque<NetworkReceive> stagedReceives;
 
-    public IdProcessor(String id, IdClient generator, NodeAddress nodeAddress) throws IOException {
+    private final ExecutorService executorService;
+
+    private final String serverAddress;
+
+    public IdProcessor(String id, IdClient generator, NodeAddress nodeAddress) {
         this.id = id;
         this.generator = generator;
         this.completedReceives = new ArrayList<>();
         this.stagedReceives = new ArrayDeque<>();
+        this.serverAddress = AddressUtil.getAddress(nodeAddress.getIp(), nodeAddress.getPort());
         this.init(nodeAddress.getIp(), nodeAddress.getPort());
         //noinspection AlibabaThreadPoolCreation
-        Executors.newSingleThreadExecutor().execute(new Sender());
+        this.executorService = Executors.newSingleThreadExecutor();
+        this.executorService.execute(new Sender());
     }
 
-    private void init(String ip, int port) throws IOException {
+    private void init(String ip, int port) {
         try {
             SocketChannel channel = SocketChannel.open();
 
@@ -65,10 +74,9 @@ public class IdProcessor {
             channel.socket().setTcpNoDelay(true);
             channel.socket().setKeepAlive(true);
             channel.socket().setSendBufferSize(1024);
-
             channel.connect(new InetSocketAddress(ip, port));
-
             selector = Selector.open();
+
             //注册到selector，监听事件为连接事件
             SelectionKey selectionKey = channel.register(selector, SelectionKey.OP_CONNECT);
 
@@ -89,6 +97,7 @@ public class IdProcessor {
                             if (channel.finishConnect()) {
                                 //设置可读事件，意思是从服务端有消息来时，提醒我;同时移除OP_CONNECT事件
                                 connectionState = 1;
+                                //关闭建立时间，打开读事件
                                 removeInterestOps(key, SelectionKey.OP_CONNECT);
                                 addInterestOps(key, SelectionKey.OP_READ);
                                 //这里不增加写事件，当需要写时，增加写事件
@@ -105,8 +114,7 @@ public class IdProcessor {
                 break;
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
+            throw new DistributedIdException("建立连接异常", e);
         } finally {
             if (connectionState != 1) {
                 connectionState = 2;
@@ -115,12 +123,15 @@ public class IdProcessor {
         }
     }
 
+    public String getAddress() {
+        return this.serverAddress;
+    }
+
     class Sender implements Runnable {
 
         @Override
         public void run() {
-            //noinspection InfiniteLoopStatement
-            while (true) {
+            while (connectionState == 1) {
                 try {
                     //监听操作系统是否有事件，事件来时，操作系统回调函数，让你阻塞状态唤醒
                     selector.select();
@@ -128,27 +139,51 @@ public class IdProcessor {
                     while (keysIterator.hasNext()) {
                         SelectionKey key = keysIterator.next();
                         keysIterator.remove();
+                        //读取数据
                         if (key.isReadable() && !hasStagedReceive()) {
                             NetworkReceive networkReceive;
                             while ((networkReceive = distributedIdChannel.read()) != null) {
                                 addToStagedReceives(networkReceive);
                             }
                         } else if (key.isWritable()) {
+                            //写数据
                             distributedIdChannel.write();
                         }
                         if (!key.isValid()) {
+                            //修改状态
                             connectionState = 2;
-                            close(distributedIdChannel);
                         }
                     }
                     addToCompletedReceives();
                     handleCompletedReceives();
+                } catch (IOException e) {
+                    connectionState = 2;
                 } catch (Exception e) {
                     LOGGER.error("读写错误", e);
+                } finally {
+                    if (connectionState == 2) {
+                        //关闭连接和释放资源
+                        close(distributedIdChannel);
+                    }
                 }
             }
         }
 
+    }
+
+    public boolean isValid() {
+        return connectionState == 1;
+    }
+
+    public void close() {
+        try {
+            close(distributedIdChannel);
+            this.executorService.shutdown();
+        } catch (Exception ignored) {
+            //do nothing
+        } finally {
+            LOGGER.warn("关闭连接：{}", distributedIdChannel.socketDescription());
+        }
     }
 
     private void close(DistributedIdChannel channel) {

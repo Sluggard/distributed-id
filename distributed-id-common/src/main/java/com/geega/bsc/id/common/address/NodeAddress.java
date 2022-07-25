@@ -1,5 +1,6 @@
 package com.geega.bsc.id.common.address;
 
+import com.geega.bsc.id.common.utils.AddressUtil;
 import lombok.Builder;
 import lombok.Data;
 import java.io.Serializable;
@@ -35,6 +36,10 @@ public class NodeAddress implements Serializable {
             return false;
         }
         return true;
+    }
+
+    public String getAddress() {
+        return AddressUtil.getAddress(this.ip, this.port);
     }
 
 }

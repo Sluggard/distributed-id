@@ -673,14 +673,16 @@ public class ByteUtil {
             try {
                 closeable.close();
             } catch (IOException e) {
-                if (exception != null)
+                if (exception != null) {
                     exception.addSuppressed(e);
-                else
+                } else {
                     exception = e;
+                }
             }
         }
-        if (exception != null)
+        if (exception != null) {
             throw exception;
+        }
     }
 
 }

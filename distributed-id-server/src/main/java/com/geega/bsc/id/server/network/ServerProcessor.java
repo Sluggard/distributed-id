@@ -2,6 +2,7 @@ package com.geega.bsc.id.server.network;
 
 import com.geega.bsc.id.common.exception.DistributedIdException;
 import com.geega.bsc.id.common.network.*;
+import com.geega.bsc.id.common.utils.AddressUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -171,7 +172,7 @@ public class ServerProcessor extends Thread {
                     int localPort = channel.socket().getLocalPort();
                     String remoteHost = channel.socket().getInetAddress().getHostAddress();
                     int remotePort = channel.socket().getPort();
-                    String connectionId = ConnectionIdUtil.getConnectionId(localHost, localPort, remoteHost, remotePort);
+                    String connectionId = AddressUtil.getConnectionId(localHost, localPort, remoteHost, remotePort);
                     LOGGER.info("[{}],连接已建立", connectionId);
                     SelectionKey selectionKey = channel.register(selector, SelectionKey.OP_READ);
                     DistributedIdChannel distributedIdChannel = buildChannel(connectionId, selectionKey, 1024);

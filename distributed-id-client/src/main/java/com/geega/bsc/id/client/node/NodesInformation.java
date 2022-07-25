@@ -19,14 +19,14 @@ public class NodesInformation {
     /**
      * 移除服务节点
      */
-    public synchronized void remove(NodeAddress nodeAddress) {
+    public void remove(NodeAddress nodeAddress) {
         nodes.remove(nodeAddress);
     }
 
     /**
      * 添加服务节点
      */
-    public synchronized void update(NodeAddress nodeAddress) {
+    public void update(NodeAddress nodeAddress) {
         if (!nodes.contains(nodeAddress)) {
             nodes.add(nodeAddress);
         }

@@ -1,7 +1,8 @@
 package com.geega.bsc.id.common.exception;
 
 /**
- * The base class of all other Kafka exceptions
+ * @author Jun.An3
+ * @date 2022/07/25
  */
 public class DistributedIdException extends RuntimeException {
 

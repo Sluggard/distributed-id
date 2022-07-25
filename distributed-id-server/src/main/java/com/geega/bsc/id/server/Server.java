@@ -52,9 +52,14 @@ public class Server {
             ServerConfig serverConfig = new ServerConfig();
 
             Properties properties = ResourcesUtil.getProperties("/application.properties");
-            String ip = properties.getProperty(ConfigConst.BIND_IP, IpUtil.getIp());
-            log.info("本机ip:{}", ip);
+            String ip = properties.getProperty(ConfigConst.BIND_IP);
+            if (ip == null || "".equals(ip)) {
+                ip = IpUtil.getIp();
+                log.info("本机ip:{}", ip);
+            }
+            
             assert ip != null;
+            assert !"".equals(ip);
             assert properties.getProperty(ConfigConst.BIND_PORT) != null;
 
             serverConfig.setIp(ip);

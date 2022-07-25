@@ -6,6 +6,7 @@ import com.geega.bsc.id.common.config.ZkConfig;
 import com.geega.bsc.id.common.constant.ZkTreeConstant;
 import com.geega.bsc.id.common.exception.DistributedIdException;
 import com.geega.bsc.id.common.factory.ZookeeperFactory;
+import com.geega.bsc.id.common.utils.AddressUtil;
 import com.geega.bsc.id.common.utils.TimeUtil;
 import com.geega.bsc.id.server.config.ServerConfig;
 import org.apache.curator.framework.CuratorFramework;
@@ -61,8 +62,7 @@ public class ZkServer {
         ZkHeartBeat register = new ZkHeartBeat();
         register.sendHeartBeat(() -> {
             try {
-                Stat stat = zkClient.setData().forPath(ZkTreeConstant.ZK_SERVER_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + getAddress(serverConfig.getIp(), serverConfig.getPort()), getDataBytes(serverConfig.getIp(), serverConfig.getPort()));
-                LOGGER.info("定时上报心跳：{}", stat);
+                zkClient.setData().forPath(ZkTreeConstant.ZK_SERVER_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + AddressUtil.getAddress(serverConfig.getIp(), serverConfig.getPort()), getDataBytes(serverConfig.getIp(), serverConfig.getPort()));
             } catch (KeeperException.NoNodeException noNodeException) {
                 //创建临时节点
                 addEphemeralSequential();
@@ -90,7 +90,7 @@ public class ZkServer {
      */
     private void addEphemeralSequential() {
         try {
-            String nodePath = ZkTreeConstant.ZK_SERVER_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + getAddress(serverConfig.getIp(), serverConfig.getPort());
+            String nodePath = ZkTreeConstant.ZK_SERVER_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + AddressUtil.getAddress(serverConfig.getIp(), serverConfig.getPort());
             byte[] data = getDataBytes(serverConfig.getIp(), serverConfig.getPort());
             if (zkClient.checkExists().creatingParentsIfNeeded().forPath(nodePath) == null) {
                 nodePath = zkClient.create()
@@ -114,10 +114,6 @@ public class ZkServer {
     private Integer generateWorkId(String nodePath) {
         String sequentialId = nodePath.replaceAll(ZkTreeConstant.ZK_WORK_ID_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + "workid-", "");
         return Integer.valueOf(sequentialId);
-    }
-
-    private String getAddress(String ip, int port) {
-        return ip + ":" + port;
     }
 
     private byte[] getDataBytes(String ip, int port) {

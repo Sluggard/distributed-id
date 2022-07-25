@@ -67,11 +67,9 @@ public class ZkClient {
                 switch (event.getType()) {
                     case CHILD_ADDED:
                     case CHILD_UPDATED:
-                        LOGGER.info("更新服务节点：{}", event.getData());
                         updateNode(path);
                         break;
                     case CHILD_REMOVED:
-                        LOGGER.info("删除服务节点：{}", event.getData());
                         removeNode(path);
                         break;
                     default:
@@ -80,11 +78,8 @@ public class ZkClient {
             });
             //等待最多默认5s，获取不到ID生成服务，就抛异常
             waitTimeoutThrow();
-        } catch (RuntimeException e) {
-            throw e;
         } catch (Exception e) {
-            LOGGER.error("初始化zk失败", e);
-            throw new DistributedIdException("初始化zk失败",e);
+            throw new DistributedIdException("初始化zk失败", e);
         }
     }
 

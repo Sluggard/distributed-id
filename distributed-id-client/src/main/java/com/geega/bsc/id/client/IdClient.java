@@ -3,10 +3,13 @@ package com.geega.bsc.id.client;
 import com.geega.bsc.id.client.network.IdProcessorDispatch;
 import com.geega.bsc.id.common.config.ZkConfig;
 import com.geega.bsc.id.common.utils.TimeUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * ID生成器
@@ -15,6 +18,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @date 2022/07/18
  */
 public class IdClient {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(IdClient.class);
 
     private final int capacity = 20;
 
@@ -30,6 +35,8 @@ public class IdClient {
     @SuppressWarnings("FieldCanBeLocal")
     private final Integer initWaitTimeoutMs = 5000;
 
+    private final AtomicBoolean isExpanding = new AtomicBoolean(false);
+
     public IdClient(ZkConfig zkConfig) {
         this.processorDispatch = new IdProcessorDispatch(new ZkClient(zkConfig), this);
         //noinspection AlibabaThreadPoolCreation
@@ -44,7 +51,10 @@ public class IdClient {
             try {
                 //noinspection BusyWait
                 Thread.sleep(1000);
-            } catch (Exception ignored){
+                if (idQueue.size() > 0) {
+                    break;
+                }
+            } catch (Exception ignored) {
             }
         }
     }
@@ -57,7 +67,8 @@ public class IdClient {
             return idQueue.poll();
         } finally {
             try {
-                if (idQueue.size() <= halfCapacity) {
+                if (idQueue.size() <= halfCapacity && !isExpanding.get()) {
+                    isExpanding.compareAndSet(false, true);
                     expandOnceAsync(halfCapacity);
                 }
             } catch (Exception ignored) {
@@ -72,7 +83,7 @@ public class IdClient {
 
     private void executeOnceSync(int num) {
         try {
-            this.processorDispatch.chooseOne().poll(num);
+            this.processorDispatch.dispatch().poll(num);
         } catch (Exception ignored) {
             //do nothing
         }
@@ -82,11 +93,14 @@ public class IdClient {
      * 缓存ID
      */
     public void cache(List<Long> ids) {
+        LOGGER.info("前：当前id缓存数：{}", idQueue.size());
         if (ids != null && !ids.isEmpty()) {
             for (Long id : ids) {
                 idQueue.offer(id);
             }
         }
+        LOGGER.info("后：当前id缓存数：{}", idQueue.size());
+        isExpanding.compareAndSet(true, false);
     }
 
 }
