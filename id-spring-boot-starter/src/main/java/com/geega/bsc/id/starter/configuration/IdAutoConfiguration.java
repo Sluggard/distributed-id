@@ -6,8 +6,10 @@
 package com.geega.bsc.id.starter.configuration;
 
 import com.geega.bsc.id.client.IdClient;
+import com.geega.bsc.id.client.cache.CacheConfig;
 import com.geega.bsc.id.common.config.ZkConfig;
-import com.geega.bsc.id.starter.properties.IdProperties;
+import com.geega.bsc.id.starter.properties.CacheProperties;
+import com.geega.bsc.id.starter.properties.ZkProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,17 +21,22 @@ import org.springframework.context.annotation.Configuration;
  * @date 2022/07/19
  */
 @Configuration
-@EnableConfigurationProperties({IdProperties.class})
+@EnableConfigurationProperties({ZkProperties.class})
 public class IdAutoConfiguration {
 
     @Bean
-    public IdClient idClient(IdProperties idProperties) {
+    public IdClient idClient(ZkProperties idProperties, CacheProperties cacheProperties) {
         ZkConfig zkConfig = new ZkConfig();
         zkConfig.setConnection(idProperties.getConnection());
         zkConfig.setNamespace(idProperties.getNamespace());
         zkConfig.setConnectionTimeoutMs(idProperties.getConnectionTimeoutMs());
         zkConfig.setSessionTimeoutMs(idProperties.getSessionTimeoutMs());
-        return new IdClient(zkConfig);
+
+        CacheConfig cacheConfig = new CacheConfig();
+        cacheConfig.setCapacity(cacheProperties.getCapacity());
+        cacheConfig.setTriggerExpand(cacheProperties.getTriggerExpand());
+        cacheConfig.setInitWaitTimeMs(cacheProperties.getInitWaitTimeMs());
+        return new IdClient(zkConfig, cacheConfig);
     }
 
 }

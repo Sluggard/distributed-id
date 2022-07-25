@@ -19,7 +19,7 @@ import java.util.Properties;
  * @date 2022/07/21
  */
 @Slf4j
-public class Server {
+public class IdServer {
 
     public static void main(String[] args) throws Exception {
 
@@ -57,7 +57,7 @@ public class Server {
                 ip = IpUtil.getIp();
                 log.info("本机ip:{}", ip);
             }
-            
+
             assert ip != null;
             assert !"".equals(ip);
             assert properties.getProperty(ConfigConst.BIND_PORT) != null;

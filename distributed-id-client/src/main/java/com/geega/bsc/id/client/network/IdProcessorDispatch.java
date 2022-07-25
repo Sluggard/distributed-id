@@ -1,7 +1,7 @@
 package com.geega.bsc.id.client.network;
 
 import com.geega.bsc.id.client.IdClient;
-import com.geega.bsc.id.client.ZkClient;
+import com.geega.bsc.id.client.zk.ZkClient;
 import com.geega.bsc.id.common.address.NodeAddress;
 import com.geega.bsc.id.common.exception.DistributedIdException;
 import java.util.List;
@@ -37,7 +37,7 @@ public class IdProcessorDispatch {
         return currentProcessor;
     }
 
-    private synchronized void innerDispatch() {
+    private void innerDispatch() {
         if (currentProcessor == null || !currentProcessor.isValid()) {
             synchronized (this) {
                 if (currentProcessor == null || !currentProcessor.isValid()) {
@@ -50,9 +50,11 @@ public class IdProcessorDispatch {
                         if (currentProcessor != null) {
                             if (!node.getAddress().equals(currentProcessor.getAddress())) {
                                 nodeAddress = node;
+                                break;
                             }
                         } else {
                             nodeAddress = node;
+                            break;
                         }
                     }
                     if (nodeAddress == null) {
@@ -64,9 +66,11 @@ public class IdProcessorDispatch {
         }
     }
 
-    private synchronized void checkClose() {
-        if (this.currentProcessor != null && !this.currentProcessor.isValid()) {
-            this.currentProcessor.close();
+    private void checkClose() {
+        synchronized (this) {
+            if (this.currentProcessor != null && !this.currentProcessor.isValid()) {
+                this.currentProcessor.close();
+            }
         }
     }
 

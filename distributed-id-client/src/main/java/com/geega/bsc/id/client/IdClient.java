@@ -1,7 +1,11 @@
 package com.geega.bsc.id.client;
 
+import com.geega.bsc.id.client.cache.CacheConfig;
 import com.geega.bsc.id.client.network.IdProcessorDispatch;
+import com.geega.bsc.id.client.zk.ZkClient;
 import com.geega.bsc.id.common.config.ZkConfig;
+import com.geega.bsc.id.common.exception.DistributedIdException;
+import com.geega.bsc.id.common.utils.SleepUtil;
 import com.geega.bsc.id.common.utils.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,41 +25,55 @@ public class IdClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IdClient.class);
 
-    private final int capacity = 20;
+    private final int capacity;
 
-    @SuppressWarnings("FieldCanBeLocal")
-    private final int halfCapacity = capacity >> 1;
+    private final int trigger;
 
-    private final LinkedBlockingQueue<Long> idQueue = new LinkedBlockingQueue<>(capacity);
+    private final int expandNum;
+
+    private final LinkedBlockingQueue<Long> idQueue;
 
     private final ExecutorService executorService;
 
     private final IdProcessorDispatch processorDispatch;
 
     @SuppressWarnings("FieldCanBeLocal")
-    private final Integer initWaitTimeoutMs = 5000;
+    private final Integer initWaitTimeoutMs;
 
     private final AtomicBoolean isExpanding = new AtomicBoolean(false);
 
-    public IdClient(ZkConfig zkConfig) {
+    public IdClient(ZkConfig zkConfig, CacheConfig cacheConfig) {
+        this.capacity = cacheConfig.getCapacity();
+        this.trigger = cacheConfig.getTriggerExpand();
+        this.expandNum = capacity - trigger;
+        assert expandNum > 0;
+        this.initWaitTimeoutMs = cacheConfig.getInitWaitTimeMs();
+        this.idQueue = new LinkedBlockingQueue<>(this.capacity);
         this.processorDispatch = new IdProcessorDispatch(new ZkClient(zkConfig), this);
         //noinspection AlibabaThreadPoolCreation
         this.executorService = Executors.newSingleThreadExecutor();
-        this.initCacheTimeout();
+        //如果等待5s无法获取数据，直接抛异常
+        this.preloadCache();
     }
 
-    private void initCacheTimeout() {
+    private void preloadCache() {
         executeOnceSync(capacity);
+        waitTimeoutThrow();
+    }
+
+    private void waitTimeoutThrow() {
+        boolean success = false;
         long now = TimeUtil.now();
         while (TimeUtil.now() - now <= initWaitTimeoutMs) {
-            try {
-                //noinspection BusyWait
-                Thread.sleep(1000);
-                if (idQueue.size() > 0) {
-                    break;
-                }
-            } catch (Exception ignored) {
+            if (idQueue.size() == 0) {
+                SleepUtil.waitMs(1000);
+            } else {
+                success = true;
+                break;
             }
+        }
+        if (!success) {
+            throw new DistributedIdException("无法获取数据");
         }
     }
 
@@ -66,18 +84,30 @@ public class IdClient {
         try {
             return idQueue.poll();
         } finally {
-            try {
-                if (idQueue.size() <= halfCapacity && !isExpanding.get()) {
-                    isExpanding.compareAndSet(false, true);
-                    expandOnceAsync(halfCapacity);
-                }
-            } catch (Exception ignored) {
-                //do nothing
-            }
+            trigger();
         }
     }
 
-    private void expandOnceAsync(@SuppressWarnings("SameParameterValue") int num) {
+    private void trigger() {
+        try {
+            //这里存在一个问题，当某次拉取不成功时，isExpanding很可能一直为true，为了解决这个问题
+            //当idQueue.size()==0，要么说明刚好使用完缓存，要么说明isExpanding.get()一直等于true
+            //正常使用情况下，idQueue.size()==0的概率是很低的，所以采取如下措施：
+            //当idQueue.size()==0时，直接将isExpanding设置为false
+            if (idQueue.size() == 0) {
+                isExpanding.set(false);
+            }
+            if (idQueue.size() <= trigger && !isExpanding.get()) {
+                if (isExpanding.compareAndSet(false, true)) {
+                    executeOnceAsync(expandNum);
+                }
+            }
+        } catch (Exception ignored) {
+            //do nothing
+        }
+    }
+
+    private void executeOnceAsync(@SuppressWarnings("SameParameterValue") int num) {
         this.executorService.execute(() -> executeOnceSync(num));
     }
 
@@ -93,14 +123,14 @@ public class IdClient {
      * 缓存ID
      */
     public void cache(List<Long> ids) {
-        LOGGER.info("前：当前id缓存数：{}", idQueue.size());
+        LOGGER.info("前-ID缓存数：{}", idQueue.size());
         if (ids != null && !ids.isEmpty()) {
             for (Long id : ids) {
                 idQueue.offer(id);
             }
         }
-        LOGGER.info("后：当前id缓存数：{}", idQueue.size());
-        isExpanding.compareAndSet(true, false);
+        LOGGER.info("后-ID缓存数：{}", idQueue.size());
+        isExpanding.set(false);
     }
 
 }

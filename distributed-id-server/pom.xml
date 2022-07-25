@@ -54,7 +54,7 @@
                             <transformers>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.geega.bsc.id.server.Server</mainClass>
+                                    <mainClass>com.geega.bsc.id.server.IdServer</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

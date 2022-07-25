@@ -16,7 +16,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @Data
 @ConfigurationProperties(prefix = "id.zk")
-public class IdProperties {
+public class ZkProperties {
 
     /**
      * eg:geely

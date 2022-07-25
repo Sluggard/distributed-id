@@ -1,4 +1,8 @@
 id:
+  cache:
+    capacity: 30
+    triggerExpand: 20
+    initWaitTimeMs: 5000
   zk:
     namespace: id
     connection: 127.0.0.1:2181
