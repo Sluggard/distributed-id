@@ -13,7 +13,7 @@
         <module>distributed-id-server</module>
         <module>distributed-id-common</module>
         <module>id-spring-boot-starter</module>
-        <module>id-spring-boot-starter-demo</module>
+        <module>id-server</module>
     </modules>
 
     <properties>

@@ -118,7 +118,7 @@ public class IdProcessor {
         } finally {
             if (connectionState != 1) {
                 connectionState = 2;
-                close(distributedIdChannel);
+                close();
             }
         }
     }
@@ -178,7 +178,6 @@ public class IdProcessor {
     public void close() {
         try {
             close(distributedIdChannel);
-            this.executorService.shutdown();
         } catch (Exception ignored) {
             //do nothing
         } finally {
@@ -189,10 +188,11 @@ public class IdProcessor {
     private void close(DistributedIdChannel channel) {
         try {
             channel.close();
+            this.stagedReceives.clear();
+            this.executorService.shutdown();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        this.stagedReceives.clear();
     }
 
     private void addToStagedReceives(NetworkReceive receive) {

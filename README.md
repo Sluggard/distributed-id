@@ -1,29 +1,40 @@
 ##### 模块介绍
 
 - distributed-id-common
+
 ```
 公共包
 ```
+
 - distributed-id-client
+
 ```
 客户端，包含distributed-id-common模块
 ```
+
 - distributed-id-server
+
 ```
 服务端，包含distributed-id-common模块
 ```
+
 - id-spring-boot-starter
+
 ```
 Spring-boot-starter模块，包含distributed-id-client、distributed-id-common模块
 ```
+
 - id-spring-boot-starter-demo
+
 ```
 基于Spring-boot-starter模块实现的应用Demo，包含distributed-id-common、distributed-id-client、id-spring-boot-starter模块
 ```
 
 ##### 如何集成
+
 - install id-spring-boot-starter模块到本地Maven仓库
 - pom中引入如下依赖
+
 ```
 <dependency>
     <groupId>com.geega.cloud</groupId>
@@ -31,13 +42,16 @@ Spring-boot-starter模块，包含distributed-id-client、distributed-id-common�
     <version>1.0-SNAPSHOT</version>
 </dependency>
 ```
+
 - 使用IdClient客户端
+
 ```
 @Autowired
 private IdClient idClient;
 ```
 
 ##### 服务端参数详解
+
 ```
 # 服务IP
 bind.ip=127.0.0.1
@@ -56,7 +70,9 @@ zk.sessionTimeoutMs=10000
 # zk连接超时
 zk.connectionTimeoutMs=10000
 ```
+
 ##### 客户端参数详解
+
 ```
 # ID缓存容量个数
 id.cache.capacity=40
@@ -85,11 +101,12 @@ id.zk.connectionTimeoutMs=10000
 - ~~优化代码结构，结构更清晰~~
 - ~~客户端拿到服务端的地址列表时，选择服务，并创建连接，创建连接后，以后每次调用都使用该连接，直到该连接断开~~
 - ~~编写使用文档，参数详解~~
+- ~~如何解决频繁启动后，zk自增的id达到snowflake中machineId的最大值，如何处理~~
+- ~~优化客户端连接释放时，资源的释放~~
+- ~~实现id server服务，提供http接口方式获取ID
 - 当获取不到ID时，想一下如何处理
 - 日志打印级别设置
-- 优化客户端连接释放时，资源的释放
 - 根据不同网络，硬件资源，输出QPS压测数据表格
 - 目前是使用ZK实现服务注册以及自增ID的获取，也可以使用MySQL、Redis使用，支持降级的方案配置
 - 日志优化
-- 如何做异地双活
-- 如何解决频繁启动后，zk自增的id达到snowflake中machineId的最大值，如何处理
+- 配置多个zk，客户端配置多个zk集群，服务端自己去配置datacenter

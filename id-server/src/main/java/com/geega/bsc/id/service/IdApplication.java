@@ -1,4 +1,4 @@
-package com.geega.bsc.id.starter.test;
+package com.geega.bsc.id.service;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -10,10 +10,10 @@ import org.springframework.context.annotation.ComponentScan;
  */
 @SpringBootApplication
 @ComponentScan(value = {"com.geega"})
-public class Application {
+public class IdApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
+        SpringApplication.run(IdApplication.class, args);
     }
 
 }

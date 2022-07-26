@@ -16,12 +16,19 @@ public class SnowFlake {
 
     /**
      * 每一部分占用的位数
+     * 序列号占用的位数(1024个序号)
      */
-    private final static long SEQUENCE_BIT = 10; //序列号占用的位数(1024个序号)
+    private final static long SEQUENCE_BIT = 10;
 
-    private final static long MACHINE_BIT = 10;   //机器标识占用的位数(1024个机器)
+    /**
+     * 机器标识占用的位数(1024个机器)
+     */
+    private final static long MACHINE_BIT = 10;
 
-    private final static long DATA_CENTER_BIT = 2;//数据中心占用的位数(最多三个数据中心)
+    /**
+     * 数据中心占用的位数(最多三个数据中心)
+     */
+    private final static long DATA_CENTER_BIT = 2;
 
     /**
      * 每一部分的最大值
@@ -41,13 +48,25 @@ public class SnowFlake {
 
     private final static long TIMESTAMP_LEFT = DATA_CENTER_LEFT + DATA_CENTER_BIT;
 
-    private long dataCenterId;  //数据中心
+    /**
+     * 数据中心
+     */
+    private final long dataCenterId;
 
-    private long machineId;     //机器标识
+    /**
+     * 机器标识
+     */
+    private final long machineId;
 
-    private long sequence = 0L; //序列号
+    /**
+     * 序列号
+     */
+    private long sequence = 0L;
 
-    private long lastStamp = -1L;//上一次时间戳
+    /**
+     * 上一次时间戳
+     */
+    private long lastStamp = -1L;
 
 
     /**
@@ -74,9 +93,14 @@ public class SnowFlake {
     public synchronized long nextId() {
         long currStamp = getNewStamp();
         if (currStamp < lastStamp) {
-            throw new RuntimeException("Clock moved backwards.  Refusing to generate id");
+            try {
+                //直接等待差额时间，单位：MS
+                Thread.sleep(lastStamp - currStamp);
+                currStamp = getNewStamp();
+            } catch (Exception ignored) {
+                //do nothing
+            }
         }
-
         if (currStamp == lastStamp) {
             //相同毫秒内，序列号自增
             sequence = (sequence + 1) & MAX_SEQUENCE;
@@ -88,9 +112,7 @@ public class SnowFlake {
             //不同毫秒内，序列号置为0
             sequence = 0L;
         }
-
         lastStamp = currStamp;
-
         return (currStamp - START_STP) << TIMESTAMP_LEFT //时间戳部分
                 | dataCenterId << DATA_CENTER_LEFT       //数据中心部分
                 | machineId << MACHINE_LEFT             //机器标识部分
@@ -112,9 +134,7 @@ public class SnowFlake {
     public static void main(String[] args) {
         SnowFlake snowFlake = new SnowFlake(2, 3);
         long start = System.currentTimeMillis();
-        for (int i = 0; i < (1 << 18); i++) {
-            System.out.println(i + ": " + snowFlake.nextId());
-        }
+        System.out.println(snowFlake.nextId());
         long end = System.currentTimeMillis();
         System.out.println(end - start);
     }
