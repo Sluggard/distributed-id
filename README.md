@@ -103,7 +103,7 @@ id.zk.connectionTimeoutMs=10000
 - ~~编写使用文档，参数详解~~
 - ~~如何解决频繁启动后，zk自增的id达到snowflake中machineId的最大值，如何处理~~
 - ~~优化客户端连接释放时，资源的释放~~
-- ~~实现id server服务，提供http接口方式获取ID
+- ~~实现id server服务，提供http接口方式获取ID~~
 - 当获取不到ID时，想一下如何处理
 - 日志打印级别设置
 - 根据不同网络，硬件资源，输出QPS压测数据表格
