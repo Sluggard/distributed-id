@@ -7,11 +7,14 @@ import com.geega.bsc.id.common.utils.ResourcesUtil;
 import com.geega.bsc.id.common.utils.SnowFlake;
 import com.geega.bsc.id.server.config.ConfigConst;
 import com.geega.bsc.id.server.config.ServerConfig;
+import com.geega.bsc.id.server.local.LocalFile;
 import com.geega.bsc.id.server.network.ServerAcceptor;
 import com.geega.bsc.id.server.network.ServerRequestCache;
 import com.geega.bsc.id.server.network.ServerRequestHandler;
 import com.geega.bsc.id.server.zk.ZkServer;
+import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
+import java.util.Objects;
 import java.util.Properties;
 
 /**
@@ -57,15 +60,21 @@ public class IdServer {
                 ip = IpUtil.getIp();
                 log.info("本机ip:{}", ip);
             }
-            assert ip != null;
-            assert !"".equals(ip);
+            assert !Strings.isNullOrEmpty(ip);
 
             String port = System.getProperty("bind.port");
-            if (port == null || "".equals(port)){
+            if (port == null || "".equals(port)) {
                 port = properties.getProperty(ConfigConst.BIND_PORT);
             }
-            assert port != null;
-            assert !"".equals(port);
+            assert !Strings.isNullOrEmpty(port);
+            assert !Strings.isNullOrEmpty(properties.getProperty(ConfigConst.ID_WORK_ID_ROOT));
+            assert !Strings.isNullOrEmpty(properties.getProperty(ConfigConst.ID_WORK_ID_FILE));
+
+            final LocalFile localFile = LocalFile.builder()
+                    .root(properties.getProperty(ConfigConst.ID_WORK_ID_ROOT))
+                    .fileName(properties.getProperty(ConfigConst.ID_WORK_ID_FILE))
+                    .build();
+            serverConfig.setLocalFile(localFile);
 
             serverConfig.setIp(ip);
             serverConfig.setPort(Integer.valueOf(port));

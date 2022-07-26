@@ -9,10 +9,10 @@ import com.geega.bsc.id.common.factory.ZookeeperFactory;
 import com.geega.bsc.id.common.utils.AddressUtil;
 import com.geega.bsc.id.common.utils.TimeUtil;
 import com.geega.bsc.id.server.config.ServerConfig;
+import com.geega.bsc.id.server.local.LocalFile;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +24,7 @@ public class ZkServer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ZkServer.class);
 
-    private volatile Integer workId;
+    private Integer workId;
 
     private final ServerConfig serverConfig;
 
@@ -48,9 +48,9 @@ public class ZkServer {
 
     private void init() {
         //创建临时节点
-        addEphemeralSequential();
-        //创建临时节点（自增id）
-        addEphemeralSequentialWorkId();
+        register();
+        //获取workId
+        generateWorkId();
         //定时上传心跳
         sendHeartbeat();
     }
@@ -65,7 +65,7 @@ public class ZkServer {
                 zkClient.setData().forPath(ZkTreeConstant.ZK_SERVER_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + AddressUtil.getAddress(serverConfig.getIp(), serverConfig.getPort()), getDataBytes(serverConfig.getIp(), serverConfig.getPort()));
             } catch (KeeperException.NoNodeException noNodeException) {
                 //创建临时节点
-                addEphemeralSequential();
+                register();
             } catch (Exception e) {
                 LOGGER.error("定时上传心跳失败", e);
             }
@@ -73,22 +73,29 @@ public class ZkServer {
     }
 
     /**
-     * 创建临时节点（自增id）
+     * 创建workId
      */
-    private void addEphemeralSequentialWorkId() {
+    private void generateWorkId() {
         try {
-            final String nodePath = zkClient.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(ZkTreeConstant.ZK_WORK_ID_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + "workid-", getDataBytes(serverConfig.getIp(), serverConfig.getPort()));
-            workId = generateWorkId(nodePath);
-            LOGGER.info("创建的临时顺序节点：{}", nodePath);
+            LocalFile localFile = serverConfig.getLocalFile();
+            Integer cacheWorkId = localFile.readWorkId();
+            if (cacheWorkId != null && cacheWorkId != -1) {
+                workId = cacheWorkId;
+            } else {
+                final String nodePath = zkClient.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(ZkTreeConstant.ZK_WORK_ID_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + "workid-", getDataBytes(serverConfig.getIp(), serverConfig.getPort()));
+                workId = parseWorkId(nodePath);
+                localFile.saveWorkId(workId);
+                LOGGER.info("创建自增workId：{}", nodePath);
+            }
         } catch (Exception e) {
-            throw new DistributedIdException("创建的临时顺序节点",e);
+            throw new DistributedIdException("创建自增workId失败", e);
         }
     }
 
     /**
-     * 创建临时服务节点
+     * 向zk注册服务
      */
-    private void addEphemeralSequential() {
+    private void register() {
         try {
             String nodePath = ZkTreeConstant.ZK_SERVER_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + AddressUtil.getAddress(serverConfig.getIp(), serverConfig.getPort());
             byte[] data = getDataBytes(serverConfig.getIp(), serverConfig.getPort());
@@ -97,13 +104,13 @@ public class ZkServer {
                         .creatingParentsIfNeeded()
                         .withMode(CreateMode.EPHEMERAL)
                         .forPath(nodePath, data);
-                LOGGER.info("创建的临时节点：{}", nodePath);
+                LOGGER.info("向zk注册服务：{}", nodePath);
             } else {
                 zkClient.setData().forPath(nodePath, data);
-                LOGGER.info("设置临时节点数据:{}", nodePath);
+                LOGGER.info("已注册服务，只设置数据:{}", nodePath);
             }
         } catch (Exception e) {
-            throw new DistributedIdException("创建临时节点失败", e);
+            throw new DistributedIdException("向zk注册服务失败", e);
         }
     }
 
@@ -111,7 +118,7 @@ public class ZkServer {
         return this.workId;
     }
 
-    private Integer generateWorkId(String nodePath) {
+    private Integer parseWorkId(String nodePath) {
         String sequentialId = nodePath.replaceAll(ZkTreeConstant.ZK_WORK_ID_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + "workid-", "");
         return Integer.valueOf(sequentialId);
     }

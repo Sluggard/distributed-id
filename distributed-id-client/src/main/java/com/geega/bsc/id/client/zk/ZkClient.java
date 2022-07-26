@@ -10,7 +10,6 @@ import com.geega.bsc.id.common.factory.ZookeeperFactory;
 import com.geega.bsc.id.common.utils.SleepUtil;
 import com.geega.bsc.id.common.utils.TimeUtil;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.cache.CuratorCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

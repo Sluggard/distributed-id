@@ -1,5 +1,6 @@
 package com.geega.bsc.id.server.config;
 
+import com.geega.bsc.id.server.local.LocalFile;
 import lombok.Data;
 
 /**
@@ -24,5 +25,7 @@ public class ServerConfig {
     private Integer zkSessionTimeoutMs;
 
     private Integer zkConnectionTimeoutMs;
+
+    private LocalFile localFile;
 
 }
