@@ -23,10 +23,6 @@
         <!--lombok-->
         <lombok.version>1.18.24</lombok.version>
         <spring.boot.version>2.2.7.RELEASE</spring.boot.version>
-<!--        <releases-url>http://127.0.0.1:8081/repository/maven-public/</releases-url>-->
-<!--        <snapshots-url>http://127.0.0.1:8081/repository/maven-snapshots/</snapshots-url>-->
-                <releases-url>http://10.113.75.27:8081/nexus/repository/maven-public/</releases-url>
-                <snapshots-url>http://10.113.75.27:8081/nexus/repository/maven-snapshots/</snapshots-url>
     </properties>
 
     <!--通用依赖,每个子模块都会有这些依赖-->
@@ -62,49 +58,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <!--上传jar时,发布到该url对应的仓库中-->
-    <distributionManagement>
-        <!--version带release的,发布到该正式版本仓库-->
-        <repository>
-            <id>maven-releases</id>
-            <name>releases</name>
-            <url>${releases-url}</url>
-        </repository>
-        <!--version带snapshots的,发布到该快照版本仓库-->
-        <snapshotRepository>
-            <id>maven-snapshots</id>
-            <name>snapshots</name>
-            <url>${snapshots-url}</url>
-        </snapshotRepository>
-    </distributionManagement>
-
-    <!--下载jar时,私服仓库地址-->
-    <repositories>
-        <repository>
-            <!--仓库id,不能重复-->
-            <id>maven-releases</id>
-            <url>${releases-url}</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-        </repository>
-        <repository>
-            <!--仓库id,不能重复-->
-            <id>maven-snapshots</id>
-            <!--仓库地址-->
-            <url>${snapshots-url}</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-        </repository>
-    </repositories>
 </project>

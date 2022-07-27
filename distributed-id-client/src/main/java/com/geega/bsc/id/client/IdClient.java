@@ -113,6 +113,7 @@ public class IdClient {
 
     private void executeOnceSync(int num) {
         try {
+            LOGGER.info("前-获取ID缓存时间：{}", TimeUtil.now());
             this.processorDispatch.dispatch().poll(num);
         } catch (Exception ignored) {
             //do nothing

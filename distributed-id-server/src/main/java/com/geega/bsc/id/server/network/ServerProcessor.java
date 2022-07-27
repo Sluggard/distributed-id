@@ -105,7 +105,7 @@ public class ServerProcessor extends Thread {
 
     private void poll() {
         try {
-            selector.select(300);
+            selector.select();
 
             Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
             while (iterator.hasNext()) {

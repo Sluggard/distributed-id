@@ -9,6 +9,7 @@ import com.geega.bsc.id.common.network.IdGeneratorTransportLayer;
 import com.geega.bsc.id.common.network.NetworkReceive;
 import com.geega.bsc.id.common.utils.AddressUtil;
 import com.geega.bsc.id.common.utils.ByteBufferUtil;
+import com.geega.bsc.id.common.utils.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
@@ -219,6 +220,7 @@ public class IdProcessor {
                 String idsJsonString = ByteBufferUtil.byteBufferToString(payload);
                 if (idsJsonString != null && idsJsonString.length() > 0) {
                     List<Long> ids = JSON.parseArray(idsJsonString, Long.class);
+                    LOGGER.info("后-获取ID缓存时间：{}", TimeUtil.now());
                     generator.cache(ids);
                 }
             }
