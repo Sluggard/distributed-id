@@ -80,7 +80,6 @@ public class ServerRequestHandler extends Thread {
                 ByteBufferUtil.getSendForServer(request.getConnectionId(), ids)
         );
 
-        LOGGER.info("数量:{},生成ID:{}", needNum, ids);
         requestChannel.addResponse(request.getProcessorId(), response);
 
         request.getSelector().wakeup();

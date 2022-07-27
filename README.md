@@ -110,3 +110,5 @@ id.zk.connectionTimeoutMs=10000
 - 目前是使用ZK实现服务注册以及自增ID的获取，也可以使用MySQL、Redis使用，支持降级的方案配置
 - 日志优化
 - 配置多个zk，客户端配置多个zk集群，服务端自己去配置datacenter
+- 基于Netty、rpc框架实现
+- 当客户端与服务端出现网络分区时的应对措施，重试？抛异常？
