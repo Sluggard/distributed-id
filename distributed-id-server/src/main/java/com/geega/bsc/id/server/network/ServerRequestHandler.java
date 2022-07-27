@@ -45,7 +45,7 @@ public class ServerRequestHandler extends Thread {
         //noinspection InfiniteLoopStatement
         while (true) {
             try {
-                Request request = requestChannel.getRequest(5000);
+                Request request = requestChannel.getRequest(10000);
                 if (request != null) {
                     processRequest(request);
                 }
@@ -58,15 +58,15 @@ public class ServerRequestHandler extends Thread {
     private void processRequest(final Request request) {
         Runnable task = () -> {
             try {
-                getNextId(request);
+                getId(request);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         };
-        executor.execute(task);
+        this.executor.execute(task);
     }
 
-    private void getNextId(Request request) {
+    private void getId(Request request) {
 
         int needNum = ByteBufferUtil.byteToIntV2(request.getData());
         List<Long> ids = new ArrayList<>();
@@ -82,6 +82,8 @@ public class ServerRequestHandler extends Thread {
 
         LOGGER.info("数量:{},生成ID:{}", needNum, ids);
         requestChannel.addResponse(request.getProcessorId(), response);
+
+        request.getSelector().wakeup();
     }
 
 }

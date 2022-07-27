@@ -1,6 +1,7 @@
 package com.geega.bsc.id.server.network;
 
 import java.nio.ByteBuffer;
+import java.nio.channels.Selector;
 
 /**
  * @author Jun.An3
@@ -14,7 +15,10 @@ public class Request {
 
     private final ByteBuffer data;
 
-    public Request(ByteBuffer data, String connectionId, int processorId) {
+    private final Selector selector;
+
+    public Request(Selector selector, ByteBuffer data, String connectionId, int processorId) {
+        this.selector = selector;
         this.data = data;
         this.connectionId = connectionId;
         this.processorId = processorId;
@@ -30,6 +34,10 @@ public class Request {
 
     public ByteBuffer getData() {
         return this.data;
+    }
+
+    public Selector getSelector() {
+        return selector;
     }
 
 }

@@ -43,7 +43,7 @@ public class ServerAcceptor extends Thread {
             this.serverSocketChannel = ServerSocketChannel.open();
             this.serverSocketChannel.bind(new InetSocketAddress(this.serverConfig.getIp(), this.serverConfig.getPort()));
             this.serverSocketChannel.configureBlocking(false);
-            this.serverSocketChannel.socket().setReceiveBufferSize(1024);
+            this.serverSocketChannel.socket().setReceiveBufferSize(4096);
         } catch (Exception e) {
             throw new DistributedIdException("初始化网络错误", e);
         }
@@ -66,7 +66,7 @@ public class ServerAcceptor extends Thread {
         while (true) {
             try {
                 this.serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-                int select = selector.select(500);
+                int select = selector.select();
                 if (select > 0) {
                     Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
                     while (iterator.hasNext()) {

@@ -1,16 +1,24 @@
 package com.geega.bsc.id.server.network;
 
 import com.geega.bsc.id.common.exception.DistributedIdException;
-import com.geega.bsc.id.common.network.*;
+import com.geega.bsc.id.common.network.DistributedIdChannel;
+import com.geega.bsc.id.common.network.IdGeneratorTransportLayer;
+import com.geega.bsc.id.common.network.NetworkReceive;
+import com.geega.bsc.id.common.network.Send;
 import com.geega.bsc.id.common.utils.AddressUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -96,7 +104,7 @@ public class ServerProcessor extends Thread {
                 NetworkReceive completedReceive = iterator.next();
                 iterator.remove();
                 DistributedIdChannel distributedIdChannel = channels.get(completedReceive.source());
-                Request request = new Request(completedReceive.payload(), distributedIdChannel.id(), processorId);
+                Request request = new Request(selector, completedReceive.payload(), distributedIdChannel.id(), processorId);
                 requestChannel.addRequest(request);
                 distributedIdChannel.mute();
             }
@@ -106,7 +114,6 @@ public class ServerProcessor extends Thread {
     private void poll() {
         try {
             selector.select();
-
             Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
             while (iterator.hasNext()) {
 
@@ -138,6 +145,7 @@ public class ServerProcessor extends Thread {
                     }
                 } catch (IOException exception) {
                     this.waitCloseConnections.offer(distributedIdChannel);
+                    LOGGER.error("IO异常，连接：{}", distributedIdChannel.socketDescription());
                 } catch (Exception e) {
                     LOGGER.error("未知异常", e);
                 }
@@ -205,7 +213,9 @@ public class ServerProcessor extends Thread {
         }
     }
 
-    //todo
+    /**
+     * 关闭异常连接
+     */
     private void processDisconnected() {
         while (!waitCloseConnections.isEmpty()) {
             DistributedIdChannel distributedIdChannel = waitCloseConnections.poll();

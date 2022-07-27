@@ -172,6 +172,16 @@ public class IdProcessor {
 
     }
 
+    /**
+     * 打印SelectionKey状态信息
+     */
+    private void selectionKeyPrint(SelectionKey key) {
+        if (key != null) {
+            LOGGER.info("SelectionKey.isReadable:{}", key.isReadable());
+            LOGGER.info("SelectionKey.isWritable:{}", key.isWritable());
+        }
+    }
+
     public boolean isValid() {
         return connectionState == 1;
     }
