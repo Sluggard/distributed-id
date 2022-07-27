@@ -37,7 +37,10 @@ public class IdController {
                            @Min(value = 1, message = "最小1") Integer num) {
         List<Long> ids = new ArrayList<>(num);
         for (int i = 0; i < num; i++) {
-            ids.add(idClient.id());
+            Long tmpId;
+            if ((tmpId = idClient.id()) != null) {
+                ids.add(tmpId);
+            }
         }
         return ids;
     }

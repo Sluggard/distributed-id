@@ -25,7 +25,8 @@ import java.util.Properties;
 public class IdServer {
 
     public static void main(String[] args) throws Exception {
-
+        log.info("info");
+        log.debug("debug");
         //同步组件
         Sync sync = new Sync();
 

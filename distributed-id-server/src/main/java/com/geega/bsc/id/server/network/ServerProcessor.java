@@ -176,12 +176,8 @@ public class ServerProcessor extends Thread {
             SocketChannel channel = newConnections.poll();
             try {
                 if (channel != null) {
-                    String localHost = channel.socket().getLocalAddress().getHostAddress();
-                    int localPort = channel.socket().getLocalPort();
-                    String remoteHost = channel.socket().getInetAddress().getHostAddress();
-                    int remotePort = channel.socket().getPort();
-                    String connectionId = AddressUtil.getConnectionId(localHost, localPort, remoteHost, remotePort);
-                    LOGGER.info("[{}],连接已建立", connectionId);
+                    String connectionId = AddressUtil.getConnectionId(channel);
+                    LOGGER.info("创建连接：[{}]", connectionId);
                     SelectionKey selectionKey = channel.register(selector, SelectionKey.OP_READ);
                     DistributedIdChannel distributedIdChannel = buildChannel(connectionId, selectionKey, 1024);
                     selectionKey.attach(distributedIdChannel);

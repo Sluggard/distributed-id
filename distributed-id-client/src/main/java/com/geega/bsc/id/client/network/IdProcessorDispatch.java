@@ -4,6 +4,8 @@ import com.geega.bsc.id.client.IdClient;
 import com.geega.bsc.id.client.zk.ZkClient;
 import com.geega.bsc.id.common.address.NodeAddress;
 import com.geega.bsc.id.common.exception.DistributedIdException;
+import com.geega.bsc.id.common.utils.AddressUtil;
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -13,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Jun.An3
  * @date 2022/07/18
  */
+@Slf4j
 public class IdProcessorDispatch {
 
     private final ZkClient zkClient;
@@ -30,6 +33,7 @@ public class IdProcessorDispatch {
 
     public IdProcessor dispatch() {
         if (currentProcessor != null && currentProcessor.isValid()) {
+            log.info("使用连接：[{}]", AddressUtil.getConnectionId(currentProcessor.getSocketChannel()));
             return currentProcessor;
         }
         checkClose();
@@ -47,15 +51,8 @@ public class IdProcessorDispatch {
                     }
                     NodeAddress nodeAddress = null;
                     for (NodeAddress node : nodes) {
-                        if (currentProcessor != null) {
-                            if (!node.getAddress().equals(currentProcessor.getAddress())) {
-                                nodeAddress = node;
-                                break;
-                            }
-                        } else {
-                            nodeAddress = node;
-                            break;
-                        }
+                        nodeAddress = node;
+                        break;
                     }
                     if (nodeAddress == null) {
                         throw new DistributedIdException("无可用服务");
@@ -70,6 +67,8 @@ public class IdProcessorDispatch {
         synchronized (this) {
             if (this.currentProcessor != null && !this.currentProcessor.isValid()) {
                 this.currentProcessor.close();
+                //help gc
+                this.currentProcessor = null;
             }
         }
     }

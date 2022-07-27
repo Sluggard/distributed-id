@@ -1,13 +1,11 @@
 package com.geega.bsc.id.client.zk;
 
-import com.alibaba.fastjson.JSON;
 import com.geega.bsc.id.client.node.NodesInformation;
 import com.geega.bsc.id.common.address.NodeAddress;
 import com.geega.bsc.id.common.config.ZkConfig;
 import com.geega.bsc.id.common.constant.ZkTreeConstant;
 import com.geega.bsc.id.common.exception.DistributedIdException;
 import com.geega.bsc.id.common.factory.ZookeeperFactory;
-import com.geega.bsc.id.common.utils.SleepUtil;
 import com.geega.bsc.id.common.utils.TimeUtil;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
@@ -26,9 +24,6 @@ public class ZkClient {
     private final NodesInformation nodesInformation;
 
     private final ZkConfig zkConfig;
-
-    @SuppressWarnings("FieldCanBeLocal")
-    private final Integer zkInitWaitTimeoutMs = 5000;
 
     public ZkClient(ZkConfig zkConfig) {
         this.zkConfig = zkConfig;
@@ -49,7 +44,6 @@ public class ZkClient {
 
             //获取当前已注册服务
             final List<String> zkNodePaths = zkClient.getChildren().forPath(ZkTreeConstant.ZK_SERVER_ROOT);
-            LOGGER.info("当前已注册服务节点：{}", JSON.toJSONString(zkNodePaths));
             for (String zkNodePath : zkNodePaths) {
                 updateNode(zkNodePath);
             }
@@ -76,26 +70,8 @@ public class ZkClient {
                         break;
                 }
             });
-            //等待最多默认5s，获取不到ID生成服务，就抛异常
-            waitTimeoutThrow();
         } catch (Exception e) {
             throw new DistributedIdException("初始化zk失败", e);
-        }
-    }
-
-    private void waitTimeoutThrow() {
-        boolean success = false;
-        long now = TimeUtil.now();
-        while (TimeUtil.now() - now <= zkInitWaitTimeoutMs) {
-            if (getNodes().size() == 0) {
-                SleepUtil.waitMs(1000);
-            } else {
-                success = true;
-                break;
-            }
-        }
-        if (!success) {
-            throw new DistributedIdException("获取ID生成服务节点失败");
         }
     }
 

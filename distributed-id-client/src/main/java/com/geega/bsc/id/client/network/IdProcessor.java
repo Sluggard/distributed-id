@@ -9,7 +9,6 @@ import com.geega.bsc.id.common.network.IdGeneratorTransportLayer;
 import com.geega.bsc.id.common.network.NetworkReceive;
 import com.geega.bsc.id.common.utils.AddressUtil;
 import com.geega.bsc.id.common.utils.ByteBufferUtil;
-import com.geega.bsc.id.common.utils.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
@@ -53,24 +52,27 @@ public class IdProcessor {
 
     private final ExecutorService executorService;
 
-    private final String serverAddress;
+    private SocketChannel socketChannel;
 
     public IdProcessor(String id, IdClient generator, NodeAddress nodeAddress) {
         this.id = id;
         this.generator = generator;
         this.completedReceives = new ArrayList<>();
         this.stagedReceives = new ArrayDeque<>();
-        this.serverAddress = AddressUtil.getAddress(nodeAddress.getIp(), nodeAddress.getPort());
         this.init(nodeAddress.getIp(), nodeAddress.getPort());
         //noinspection AlibabaThreadPoolCreation
-        this.executorService = Executors.newSingleThreadExecutor();
+        this.executorService = Executors.newSingleThreadExecutor(r -> {
+            Thread thread = new Thread(r, "Sender-Schedule");
+            thread.setDaemon(true);
+            return thread;
+        });
         this.executorService.execute(new Sender());
     }
 
     private void init(String ip, int port) {
         try {
             SocketChannel channel = SocketChannel.open();
-
+            socketChannel = channel;
             channel.configureBlocking(false);
             channel.socket().setTcpNoDelay(true);
             channel.socket().setKeepAlive(true);
@@ -102,7 +104,7 @@ public class IdProcessor {
                                 removeInterestOps(key, SelectionKey.OP_CONNECT);
                                 addInterestOps(key, SelectionKey.OP_READ);
                                 //这里不增加写事件，当需要写时，增加写事件
-                                LOGGER.info("ID生成服务建立连接成功");
+                                LOGGER.info("创建连接:[{}]", AddressUtil.getConnectionId(channel));
                                 break;
                             } else {
                                 key.cancel();
@@ -124,8 +126,8 @@ public class IdProcessor {
         }
     }
 
-    public String getAddress() {
-        return this.serverAddress;
+    public SocketChannel getSocketChannel() {
+        return this.socketChannel;
     }
 
     class Sender implements Runnable {
@@ -172,21 +174,11 @@ public class IdProcessor {
 
     }
 
-    /**
-     * 打印SelectionKey状态信息
-     */
-    private void selectionKeyPrint(SelectionKey key) {
-        if (key != null) {
-            LOGGER.info("SelectionKey.isReadable:{}", key.isReadable());
-            LOGGER.info("SelectionKey.isWritable:{}", key.isWritable());
-        }
-    }
-
-    public boolean isValid() {
+    boolean isValid() {
         return connectionState == 1;
     }
 
-    public void close() {
+    void close() {
         try {
             close(distributedIdChannel);
         } catch (Exception ignored) {
@@ -230,7 +222,6 @@ public class IdProcessor {
                 String idsJsonString = ByteBufferUtil.byteBufferToString(payload);
                 if (idsJsonString != null && idsJsonString.length() > 0) {
                     List<Long> ids = JSON.parseArray(idsJsonString, Long.class);
-                    LOGGER.info("后-获取ID缓存时间：{}", TimeUtil.now());
                     generator.cache(ids);
                 }
             }

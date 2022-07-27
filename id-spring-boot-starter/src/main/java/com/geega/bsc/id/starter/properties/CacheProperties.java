@@ -28,8 +28,4 @@ public class CacheProperties {
      */
     Integer triggerExpand = 10;
 
-    /**
-     * eg:5000
-     */
-    Integer initWaitTimeMs = 5000;
 }

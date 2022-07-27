@@ -81,11 +81,12 @@ public class ZkServer {
             Integer cacheWorkId = localFile.readWorkId();
             if (cacheWorkId != null && cacheWorkId != -1) {
                 workId = cacheWorkId;
+                LOGGER.info("获取本地workId：[{}]", workId);
             } else {
                 final String nodePath = zkClient.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(ZkTreeConstant.ZK_WORK_ID_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + "workid-", getDataBytes(serverConfig.getIp(), serverConfig.getPort()));
                 workId = parseWorkId(nodePath);
                 localFile.saveWorkId(workId);
-                LOGGER.info("创建自增workId：{}", nodePath);
+                LOGGER.info("创建Zk-workId：[{}]", workId);
             }
         } catch (Exception e) {
             throw new DistributedIdException("创建自增workId失败", e);
@@ -104,10 +105,10 @@ public class ZkServer {
                         .creatingParentsIfNeeded()
                         .withMode(CreateMode.EPHEMERAL)
                         .forPath(nodePath, data);
-                LOGGER.info("向zk注册服务：{}", nodePath);
+                LOGGER.info("向zk注册服务：[{}]", nodePath);
             } else {
                 zkClient.setData().forPath(nodePath, data);
-                LOGGER.info("已注册服务，只设置数据:{}", nodePath);
+                LOGGER.info("已注册服务，只设置数据:[{}]", nodePath);
             }
         } catch (Exception e) {
             throw new DistributedIdException("向zk注册服务失败", e);

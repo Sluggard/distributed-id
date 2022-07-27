@@ -35,7 +35,6 @@ public class IdAutoConfiguration {
         CacheConfig cacheConfig = new CacheConfig();
         cacheConfig.setCapacity(cacheProperties.getCapacity());
         cacheConfig.setTriggerExpand(cacheProperties.getTriggerExpand());
-        cacheConfig.setInitWaitTimeMs(cacheProperties.getInitWaitTimeMs());
         return new IdClient(zkConfig, cacheConfig);
     }
 
