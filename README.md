@@ -24,10 +24,10 @@
 Spring-boot-starter模块，包含distributed-id-client、distributed-id-common模块
 ```
 
-- id-spring-boot-starter-demo
+- id-server
 
 ```
-基于Spring-boot-starter模块实现的应用Demo，包含distributed-id-common、distributed-id-client、id-spring-boot-starter模块
+基于Spring-boot-starter模块，提供HTTP方式获取ID的应用，包含distributed-id-common、distributed-id-client、id-spring-boot-starter模块
 ```
 
 ##### 如何集成
@@ -78,8 +78,6 @@ zk.connectionTimeoutMs=10000
 id.cache.capacity=40
 # ID缓存少于triggerExpand时，会触发拉取操作，拉取数量为capacity - triggerExpand
 id.cache.triggerExpand=20
-# 客户端启动时，最多等待5s，如果超过5s未拉取到ID数据，直接抛出异常，启动失败
-id.cache.initWaitTimeMs=5000
 # zk命名空间
 id.zk.namespace=id
 # zk的连接，集群时，例子：127.0.0.1:2181，127.0.0.1:2182
