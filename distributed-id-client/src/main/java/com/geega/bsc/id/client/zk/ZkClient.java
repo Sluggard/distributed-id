@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.zookeeper.CreateMode;
+
 import java.nio.channels.SocketChannel;
 import java.util.List;
 
@@ -38,12 +39,9 @@ public class ZkClient {
 
     public void register(SocketChannel channel) {
         try {
-            client.create()
-                    .creatingParentsIfNeeded()
-                    .withMode(CreateMode.EPHEMERAL)
-                    .forPath(ZkTreeConstant.CLIENT_ROOT + ZkTreeConstant.PATH_SEPARATOR + AddressUtil.getConnectionId(channel));
+            client.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(ZkTreeConstant.CLIENT_ROOT + ZkTreeConstant.PATH_SEPARATOR + AddressUtil.getConnectionId(channel));
         } catch (Exception e) {
-            log.warn("客户端向ZK注册失败", e);
+            throw new DistributedIdException("客户端向ZK注册失败", e);
         }
     }
 
@@ -78,50 +76,46 @@ public class ZkClient {
             });
 
             //监听客户端列表
-//            PathChildrenCache clientNodeCache = new PathChildrenCache(client, ZkTreeConstant.CLIENT_ROOT, true);
-//            clientNodeCache.start();
-//            clientNodeCache.getListenable().addListener((curatorFramework, event) -> {
-//                String path = event.getData().getPath();
-//                //noinspection unused
-//                byte[] data = event.getData().getData();
-//                switch (event.getType()) {
-//                    case CHILD_ADDED:
-//                    case CHILD_UPDATED:
-//                        updateNode(path);
-//                        break;
-//                    case CHILD_REMOVED:
-//                        removeNode(path);
-//                        break;
-//                    default:
-//                        break;
-//                }
-//            });
+            PathChildrenCache clientNodeCache = new PathChildrenCache(client, ZkTreeConstant.CLIENT_ROOT, true);
+            clientNodeCache.start();
+            clientNodeCache.getListenable().addListener((curatorFramework, event) -> {
+                String path = event.getData().getPath();
+                switch (event.getType()) {
+                    case CHILD_ADDED:
+                    case CHILD_UPDATED:
+                        break;
+                    case CHILD_REMOVED:
+                        break;
+                    default:
+                        break;
+                }
+            });
 
         } catch (Exception e) {
             throw new DistributedIdException("初始化zk失败", e);
         }
     }
 
-    private void updateClientAlive(){
-
-    }
-
     private void updateNode(String zkNodePath) {
-        nodesInformation.update(getNodeAddress(zkNodePath));
+        this.nodesInformation.update(getNodeAddress(zkNodePath));
     }
 
     private void removeNode(String zkNodePath) {
-        nodesInformation.remove(getNodeAddress(zkNodePath));
+        this.nodesInformation.remove(getNodeAddress(zkNodePath));
+    }
+
+    private NodeAddress getNodeAddressClientAlive(String zkNodePath) {
+        String[] addresses = zkNodePath.split("-");
+        String clientAddress = addresses[0];
+        String serverAddress = addresses[1];
+        final String[] splits = serverAddress.split(":");
+        return NodeAddress.builder().ip(splits[0]).port(Integer.valueOf(splits[1])).lastUpdateTime(TimeUtil.now()).build();
     }
 
     private NodeAddress getNodeAddress(String zkNodePath) {
         final String address = zkNodePath.replaceAll(ZkTreeConstant.SERVER_ROOT + ZkTreeConstant.PATH_SEPARATOR, "");
         final String[] splits = address.split(":");
-        return NodeAddress.builder()
-                .ip(splits[0])
-                .port(Integer.valueOf(splits[1]))
-                .lastUpdateTime(TimeUtil.now())
-                .build();
+        return NodeAddress.builder().ip(splits[0]).port(Integer.valueOf(splits[1])).lastUpdateTime(TimeUtil.now()).build();
     }
 
 }

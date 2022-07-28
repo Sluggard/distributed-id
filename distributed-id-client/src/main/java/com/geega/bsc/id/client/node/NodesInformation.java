@@ -2,7 +2,9 @@ package com.geega.bsc.id.client.node;
 
 import com.geega.bsc.id.common.address.NodeAddress;
 import lombok.extern.slf4j.Slf4j;
+
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -12,18 +14,25 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Slf4j
 public class NodesInformation {
 
+    private final ConcurrentHashMap<String,NodeAddress> nodeMap = new ConcurrentHashMap<>();
     private final CopyOnWriteArrayList<NodeAddress> nodes = new CopyOnWriteArrayList<>();
 
     public List<NodeAddress> getNodes() {
         return this.nodes;
     }
 
+    public synchronized void updateClientAlive(NodeAddress nodeAddress, String client) {
+        if (nodes.contains(nodeAddress)){
+
+        }
+    }
+
     /**
      * 移除服务节点
      */
     public void remove(NodeAddress nodeAddress) {
-        log.info("移除服务节点：[{}]", nodeAddress.getAddress());
         nodes.remove(nodeAddress);
+        log.info("移除服务节点：[{}]", nodeAddress.getAddress());
     }
 
     /**
@@ -31,8 +40,8 @@ public class NodesInformation {
      */
     public void update(NodeAddress nodeAddress) {
         if (!nodes.contains(nodeAddress)) {
-            log.info("新增服务节点：[{}]", nodeAddress);
             nodes.add(nodeAddress);
+            log.info("新增服务节点：[{}]", nodeAddress);
         } else {
             for (NodeAddress node : nodes) {
                 if (node.equals(nodeAddress)) {

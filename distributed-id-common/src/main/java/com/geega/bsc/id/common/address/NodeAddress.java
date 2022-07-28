@@ -3,8 +3,10 @@ package com.geega.bsc.id.common.address;
 import com.geega.bsc.id.common.utils.AddressUtil;
 import lombok.Builder;
 import lombok.Data;
+
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author Jun.An3
@@ -17,6 +19,8 @@ public class NodeAddress implements Serializable {
     private String ip;
 
     private Integer port;
+
+    private Set<String> clients;
 
     private int clientAlive;
 
