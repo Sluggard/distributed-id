@@ -50,14 +50,15 @@ public class IdProcessorDispatch {
                         throw new DistributedIdException("无可用服务");
                     }
                     NodeAddress nodeAddress = null;
-                    for (NodeAddress node : nodes) {
-                        nodeAddress = node;
-                        break;
+                    int maxClientAlive = Integer.MAX_VALUE;
+                    //筛选出最少连接的服务节点
+                    for (NodeAddress tmpNodeAddress : nodes) {
+                        if (tmpNodeAddress.getClientAlive() <= maxClientAlive) {
+                            nodeAddress = tmpNodeAddress;
+                            maxClientAlive = tmpNodeAddress.getClientAlive();
+                        }
                     }
-                    if (nodeAddress == null) {
-                        throw new DistributedIdException("无可用服务");
-                    }
-                    currentProcessor = new IdProcessor(String.valueOf(id.getAndIncrement()), generator, nodeAddress);
+                    currentProcessor = new IdProcessor(zkClient, String.valueOf(id.getAndIncrement()), generator, nodeAddress);
                 }
             }
         }

@@ -2,6 +2,7 @@ package com.geega.bsc.id.client.network;
 
 import com.alibaba.fastjson.JSON;
 import com.geega.bsc.id.client.IdClient;
+import com.geega.bsc.id.client.zk.ZkClient;
 import com.geega.bsc.id.common.address.NodeAddress;
 import com.geega.bsc.id.common.exception.DistributedIdException;
 import com.geega.bsc.id.common.network.DistributedIdChannel;
@@ -33,6 +34,8 @@ public class IdProcessor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IdProcessor.class);
 
+    private final ZkClient zkClient;
+
     private final String id;
 
     private final IdClient generator;
@@ -54,7 +57,8 @@ public class IdProcessor {
 
     private SocketChannel socketChannel;
 
-    public IdProcessor(String id, IdClient generator, NodeAddress nodeAddress) {
+    public IdProcessor(ZkClient zkClient, String id, IdClient generator, NodeAddress nodeAddress) {
+        this.zkClient = zkClient;
         this.id = id;
         this.generator = generator;
         this.completedReceives = new ArrayList<>();
@@ -100,10 +104,11 @@ public class IdProcessor {
                             if (channel.finishConnect()) {
                                 //设置可读事件，意思是从服务端有消息来时，提醒我;同时移除OP_CONNECT事件
                                 connectionState = 1;
-                                //关闭建立时间，打开读事件
+                                //关闭建立事件，打开读事件
                                 removeInterestOps(key, SelectionKey.OP_CONNECT);
                                 addInterestOps(key, SelectionKey.OP_READ);
-                                //这里不增加写事件，当需要写时，增加写事件
+                                //注册客户端到zk
+                                zkClient.register(channel);
                                 LOGGER.info("创建连接:[{}]", AddressUtil.getConnectionId(channel));
                                 break;
                             } else {

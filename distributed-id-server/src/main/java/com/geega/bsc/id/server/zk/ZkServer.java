@@ -62,7 +62,7 @@ public class ZkServer {
         ZkHeartBeat register = new ZkHeartBeat();
         register.sendHeartBeat(() -> {
             try {
-                zkClient.setData().forPath(ZkTreeConstant.ZK_SERVER_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + AddressUtil.getAddress(serverConfig.getIp(), serverConfig.getPort()), getDataBytes(serverConfig.getIp(), serverConfig.getPort()));
+                zkClient.setData().forPath(ZkTreeConstant.SERVER_ROOT + ZkTreeConstant.PATH_SEPARATOR + AddressUtil.getAddress(serverConfig.getIp(), serverConfig.getPort()), getDataBytes(serverConfig.getIp(), serverConfig.getPort()));
             } catch (KeeperException.NoNodeException noNodeException) {
                 //创建临时节点
                 register();
@@ -83,7 +83,7 @@ public class ZkServer {
                 workId = cacheWorkId;
                 LOGGER.info("获取本地workId：[{}]", workId);
             } else {
-                final String nodePath = zkClient.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(ZkTreeConstant.ZK_WORK_ID_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + "workid-", getDataBytes(serverConfig.getIp(), serverConfig.getPort()));
+                final String nodePath = zkClient.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(ZkTreeConstant.WORK_ID_ROOT + ZkTreeConstant.PATH_SEPARATOR + "workid-", getDataBytes(serverConfig.getIp(), serverConfig.getPort()));
                 workId = parseWorkId(nodePath);
                 localFile.saveWorkId(workId);
                 LOGGER.info("创建Zk-workId：[{}]", workId);
@@ -98,7 +98,7 @@ public class ZkServer {
      */
     private void register() {
         try {
-            String nodePath = ZkTreeConstant.ZK_SERVER_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + AddressUtil.getAddress(serverConfig.getIp(), serverConfig.getPort());
+            String nodePath = ZkTreeConstant.SERVER_ROOT + ZkTreeConstant.PATH_SEPARATOR + AddressUtil.getAddress(serverConfig.getIp(), serverConfig.getPort());
             byte[] data = getDataBytes(serverConfig.getIp(), serverConfig.getPort());
             if (zkClient.checkExists().creatingParentsIfNeeded().forPath(nodePath) == null) {
                 nodePath = zkClient.create()
@@ -120,7 +120,7 @@ public class ZkServer {
     }
 
     private Integer parseWorkId(String nodePath) {
-        String sequentialId = nodePath.replaceAll(ZkTreeConstant.ZK_WORK_ID_ROOT + ZkTreeConstant.ZK_PATH_SEPARATOR + "workid-", "");
+        String sequentialId = nodePath.replaceAll(ZkTreeConstant.WORK_ID_ROOT + ZkTreeConstant.PATH_SEPARATOR + "workid-", "");
         return Integer.valueOf(sequentialId);
     }
 

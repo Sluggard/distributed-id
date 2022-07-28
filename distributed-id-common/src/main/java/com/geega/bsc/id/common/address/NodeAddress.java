@@ -18,6 +18,8 @@ public class NodeAddress implements Serializable {
 
     private Integer port;
 
+    private int clientAlive;
+
     private Long lastUpdateTime;
 
     @Override

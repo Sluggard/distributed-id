@@ -31,8 +31,17 @@ public class NodesInformation {
      */
     public void update(NodeAddress nodeAddress) {
         if (!nodes.contains(nodeAddress)) {
-            log.info("新增服务节点：[{}]", nodeAddress.getAddress());
+            log.info("新增服务节点：[{}]", nodeAddress);
             nodes.add(nodeAddress);
+        } else {
+            for (NodeAddress node : nodes) {
+                if (node.equals(nodeAddress)) {
+                    node.setLastUpdateTime(nodeAddress.getLastUpdateTime());
+                    node.setClientAlive(nodeAddress.getClientAlive());
+                    log.info("更新服务节点：[{}]", node);
+                    break;
+                }
+            }
         }
     }
 

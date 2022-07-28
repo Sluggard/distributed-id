@@ -102,8 +102,9 @@ public class IdClient {
     private void executeOnceSync(int num) {
         try {
             this.processorDispatch.dispatch().poll(num);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
             //do nothing
+            LOGGER.error("拉取ID异常", e);
         }
     }
 
