@@ -101,7 +101,7 @@ public class DistributedIdChannel {
 
     public void setSend(Send send) {
         if (this.send != null) {
-            throw new DistributedIdException("Attempt to begin a send operation with prior send operation still in progress.");
+            throw new DistributedIdException("异常：上一个Send请求未完成，又开始Send请求了");
         }
         this.send = send;
         this.transportLayer.addInterestOps(SelectionKey.OP_WRITE);

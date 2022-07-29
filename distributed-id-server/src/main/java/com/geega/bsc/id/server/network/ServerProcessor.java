@@ -82,9 +82,10 @@ public class ServerProcessor extends Thread {
                 configureNewConnections();
                 //处理数据,将数据发送出去,就是写
                 processNewResponses();
-                //尝试拉取事件
-                poll();
-                addToCompletedReceives();
+                //处理事件
+                handleEvent();
+                //将一个业务完成read时的数据放入completedReceives中
+                stagedToCompletedReceives();
                 //对于读取到的请求,进行处理,然后处理完后,可能会把结果放入newResponses中,等待被发送出去
                 processCompletedReceives();
                 //处理发送数据成功
@@ -111,7 +112,7 @@ public class ServerProcessor extends Thread {
         }
     }
 
-    private void poll() {
+    private void handleEvent() {
         try {
             selector.select();
             Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
@@ -155,15 +156,27 @@ public class ServerProcessor extends Thread {
         }
     }
 
+    /**
+     * 一次只处理一个数据
+     */
     private void processNewResponses() {
         Response curr = requestChannel.getResponse(processorId);
-        while (curr != null) {
-            try {
+        try {
+            if (curr != null){
                 sendResponse(curr);
-            } finally {
-                curr = requestChannel.getResponse(processorId);
             }
+        } catch (Exception e) {
+            //do nothing
+            LOGGER.error("发送请求异常", e);
         }
+
+//        while (curr != null) {
+//            try {
+//                sendResponse(curr);
+//            } finally {
+//                curr = requestChannel.getResponse(processorId);
+//            }
+//        }
     }
 
     private void sendResponse(Response curr) {
@@ -238,7 +251,7 @@ public class ServerProcessor extends Thread {
         return stagedReceives.containsKey(channel);
     }
 
-    private void addToCompletedReceives() {
+    private void stagedToCompletedReceives() {
         if (!this.stagedReceives.isEmpty()) {
             Iterator<Map.Entry<DistributedIdChannel, Deque<NetworkReceive>>> iter = this.stagedReceives.entrySet().iterator();
             while (iter.hasNext()) {
