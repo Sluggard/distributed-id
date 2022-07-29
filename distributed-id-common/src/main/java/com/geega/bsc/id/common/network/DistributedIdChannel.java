@@ -99,8 +99,11 @@ public class DistributedIdChannel {
         return socket.getInetAddress().toString();
     }
 
-    public void setSend(Send send) {
+    public void setSend(Send send, boolean skip) {
         if (this.send != null) {
+            if (skip) {
+                return;
+            }
             throw new DistributedIdException("异常：上一个Send请求未完成，又开始Send请求了");
         }
         this.send = send;

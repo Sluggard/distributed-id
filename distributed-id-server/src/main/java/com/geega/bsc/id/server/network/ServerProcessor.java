@@ -162,7 +162,7 @@ public class ServerProcessor extends Thread {
     private void processNewResponses() {
         Response curr = requestChannel.getResponse(processorId);
         try {
-            if (curr != null){
+            if (curr != null) {
                 sendResponse(curr);
             }
         } catch (Exception e) {
@@ -181,7 +181,7 @@ public class ServerProcessor extends Thread {
 
     private void sendResponse(Response curr) {
         DistributedIdChannel channel = channels.get(curr.getDestination());
-        channel.setSend(curr.getSend());
+        channel.setSend(curr.getSend(), false);
     }
 
     private void configureNewConnections() {

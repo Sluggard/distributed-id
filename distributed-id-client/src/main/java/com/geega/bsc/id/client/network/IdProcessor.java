@@ -213,7 +213,7 @@ public class IdProcessor {
 
     public void poll(int num) {
         //放入请求数据
-        distributedIdChannel.setSend(ByteBufferUtil.getSend(id, num));
+        distributedIdChannel.setSend(ByteBufferUtil.getSend(id, num), true);
         //唤醒selector
         selector.wakeup();
     }
