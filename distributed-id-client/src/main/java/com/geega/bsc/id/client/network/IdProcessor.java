@@ -162,7 +162,7 @@ public class IdProcessor {
                             connectionState = 2;
                         }
                     }
-                    addToCompletedReceives();
+                    stagedToCompletedReceives();
                     handleCompletedReceives();
                 } catch (IOException e) {
                     connectionState = 2;
@@ -233,7 +233,7 @@ public class IdProcessor {
         }
     }
 
-    private void addToCompletedReceives() {
+    private void stagedToCompletedReceives() {
         if (!this.stagedReceives.isEmpty()) {
             Iterator<NetworkReceive> iterator = this.stagedReceives.iterator();
             if (!distributedIdChannel.isMute()) {

@@ -73,7 +73,7 @@ public class IdGeneratorTransportLayer implements TransportLayer {
     }
 
     @Override
-    public void handshake() throws IOException {
+    public void handshake() {
     }
 
     @Override
