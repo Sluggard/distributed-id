@@ -1,13 +1,12 @@
 package com.geega.bsc.id.server.zk;
 
 import com.alibaba.fastjson.JSON;
-import com.geega.bsc.id.common.address.NodeAddress;
+import com.geega.bsc.id.common.address.ServerNode;
 import com.geega.bsc.id.common.config.ZkConfig;
 import com.geega.bsc.id.common.constant.ZkTreeConstant;
 import com.geega.bsc.id.common.exception.DistributedIdException;
 import com.geega.bsc.id.common.factory.ZookeeperFactory;
 import com.geega.bsc.id.common.utils.AddressUtil;
-import com.geega.bsc.id.common.utils.TimeUtil;
 import com.geega.bsc.id.server.config.ServerConfig;
 import com.geega.bsc.id.server.local.LocalFile;
 import org.apache.curator.framework.CuratorFramework;
@@ -125,7 +124,7 @@ public class ZkServer {
     }
 
     private byte[] getDataBytes(String ip, int port) {
-        final NodeAddress netAddress = NodeAddress.builder().ip(ip).port(port).lastUpdateTime(TimeUtil.now()).build();
+        final ServerNode netAddress = ServerNode.builder().ip(ip).port(port).build();
         return JSON.toJSONString(netAddress).getBytes();
     }
 

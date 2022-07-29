@@ -3,7 +3,7 @@ package com.geega.bsc.id.client.network;
 import com.alibaba.fastjson.JSON;
 import com.geega.bsc.id.client.IdClient;
 import com.geega.bsc.id.client.zk.ZkClient;
-import com.geega.bsc.id.common.address.NodeAddress;
+import com.geega.bsc.id.common.address.ServerNode;
 import com.geega.bsc.id.common.exception.DistributedIdException;
 import com.geega.bsc.id.common.network.DistributedIdChannel;
 import com.geega.bsc.id.common.network.IdGeneratorTransportLayer;
@@ -57,7 +57,7 @@ public class IdProcessor {
 
     private SocketChannel socketChannel;
 
-    public IdProcessor(ZkClient zkClient, String id, IdClient generator, NodeAddress nodeAddress) {
+    public IdProcessor(ZkClient zkClient, String id, IdClient generator, ServerNode nodeAddress) {
         this.zkClient = zkClient;
         this.id = id;
         this.generator = generator;

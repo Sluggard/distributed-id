@@ -2,11 +2,12 @@ package com.geega.bsc.id.client.network;
 
 import com.geega.bsc.id.client.IdClient;
 import com.geega.bsc.id.client.zk.ZkClient;
-import com.geega.bsc.id.common.address.NodeAddress;
+import com.geega.bsc.id.common.address.ServerNode;
 import com.geega.bsc.id.common.exception.DistributedIdException;
 import com.geega.bsc.id.common.utils.AddressUtil;
 import lombok.extern.slf4j.Slf4j;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -45,20 +46,13 @@ public class IdProcessorDispatch {
         if (currentProcessor == null || !currentProcessor.isValid()) {
             synchronized (this) {
                 if (currentProcessor == null || !currentProcessor.isValid()) {
-                    List<NodeAddress> nodes = zkClient.getNodes();
+                    List<ServerNode> nodes = zkClient.getNodes();
                     if (nodes.isEmpty()) {
                         throw new DistributedIdException("无可用服务");
                     }
-                    NodeAddress nodeAddress = null;
-                    int maxClientAlive = Integer.MAX_VALUE;
                     //筛选出最少连接的服务节点
-                    for (NodeAddress tmpNodeAddress : nodes) {
-                        if (tmpNodeAddress.getClientAlive() <= maxClientAlive) {
-                            nodeAddress = tmpNodeAddress;
-                            maxClientAlive = tmpNodeAddress.getClientAlive();
-                        }
-                    }
-                    currentProcessor = new IdProcessor(zkClient, String.valueOf(id.getAndIncrement()), generator, nodeAddress);
+                    final Optional<ServerNode> first = nodes.stream().sorted().findFirst();
+                    currentProcessor = new IdProcessor(zkClient, String.valueOf(id.getAndIncrement()), generator, first.get());
                 }
             }
         }
