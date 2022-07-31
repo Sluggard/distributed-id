@@ -113,4 +113,5 @@ id.zk.connectionTimeoutMs=10000
 - 配置多个zk，客户端配置多个zk集群，服务端自己去配置datacenter
 - 基于Netty、rpc框架实现
 - 发现当前连接已断开，移除客户端中服务节点缓存
-- 压测出现问题：DistributedIdChannel.setSend(Send) throw new DistributedIdException("异常：上一个Send请求未完成，又开始Send请求了");
+- 压测出现问题：DistributedIdChannel.setSend(Send) throw new DistributedIdException("异常：上一个Send请求未完成，又开始Send请求了"); 
+不要先从队列拉去数据,而是,先判断是否已经发送了数据再从队列中拉数据;客户端拉去ID,如果判断到未发送成功,直接跳过.

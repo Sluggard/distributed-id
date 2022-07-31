@@ -169,14 +169,6 @@ public class ServerProcessor extends Thread {
             //do nothing
             LOGGER.error("发送请求异常", e);
         }
-
-//        while (curr != null) {
-//            try {
-//                sendResponse(curr);
-//            } finally {
-//                curr = requestChannel.getResponse(processorId);
-//            }
-//        }
     }
 
     private void sendResponse(Response curr) {
