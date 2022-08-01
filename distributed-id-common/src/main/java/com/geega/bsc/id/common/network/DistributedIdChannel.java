@@ -36,9 +36,6 @@ public class DistributedIdChannel {
         ByteUtil.closeAll(transportLayer);
     }
 
-    /**
-     * Does handshake of transportLayer and authentication using configured authenticator
-     */
     public void prepare() throws IOException {
         if (!transportLayer.ready()) {
             transportLayer.handshake();
@@ -82,12 +79,6 @@ public class DistributedIdChannel {
         return send != null;
     }
 
-    /**
-     * Returns the address to which this channel's socket is connected or `null` if the socket has never been connected.
-     * <p>
-     * If the socket was connected prior to being closed, then this method will continue to return the
-     * connected address after the socket is closed.
-     */
     public InetAddress socketAddress() {
         return transportLayer.socketChannel().socket().getInetAddress();
     }

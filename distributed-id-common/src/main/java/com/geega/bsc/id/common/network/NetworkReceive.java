@@ -7,17 +7,18 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.ScatteringByteChannel;
 
-/**
- * A size delimited Receive that consists of a 4 byte network-ordered size N followed by N bytes of content
- */
 public class NetworkReceive implements Receive {
 
     public final static String UNKNOWN_SOURCE = "";
+
     public final static int UNLIMITED = -1;
 
     private final String source;
+
     private final ByteBuffer size;
+
     private final int maxSize;
+
     private ByteBuffer buffer;
 
 
@@ -61,11 +62,7 @@ public class NetworkReceive implements Receive {
         return readFromReadableChannel(channel);
     }
 
-    // Need a method to read from ReadableByteChannel because BlockingChannel requires read with timeout
-    // See: http://stackoverflow.com/questions/2866557/timeout-for-socketchannel-doesnt-work
-    // This can go away after we get rid of BlockingChannel
-    @Deprecated
-    public long readFromReadableChannel(ReadableByteChannel channel) throws IOException {
+    private long readFromReadableChannel(ReadableByteChannel channel) throws IOException {
         int read = 0;
         if (size.hasRemaining()) {
             int bytesRead = channel.read(size);
