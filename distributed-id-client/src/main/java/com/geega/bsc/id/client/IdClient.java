@@ -97,8 +97,9 @@ public class IdClient {
                     executeOnceAsync(expandNum);
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
             //do nothing
+            LOGGER.error("触发拉取ID异常", e);
         }
     }
 
@@ -124,8 +125,7 @@ public class IdClient {
                 idQueue.offer(id);
             }
         }
-        isExpanding.set(false);
-        LOGGER.info("拉取ID数据：[{}]", ids);
+        this.isExpanding.set(false);
     }
 
 }

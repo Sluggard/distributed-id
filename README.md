@@ -57,6 +57,10 @@ private IdClient idClient;
 bind.ip=127.0.0.1
 # 服务端口
 bind.port=9999
+# 存放机器id文件父目录
+id.workid.root=F:\\tmp
+# 存放几区id文件名
+id.workid.file=workid.txt
 # SnowFlake算法中的数据中心号
 id.datacenter=1
 # 基于NIO实现的Reactor模式时，Processor数量
@@ -109,8 +113,8 @@ id.zk.connectionTimeoutMs=10000
 - ~~日志优化~~
 - ~~优化：客户端可以选择【最少客户端连接】的服务端，/client/ip1:port1-ip2:port2，然后客户端监听/client目录~~
 - ~~压测出现问题：DistributedIdChannel.setSend(Send) throw new DistributedIdException("异常：上一个Send请求未完成，又开始Send请求了");~~
+- ~~发现当前连接已断开，移除客户端中服务节点缓存~~
 - 根据不同网络，硬件资源，输出QPS压测数据表格
 - 目前是使用ZK实现服务注册以及自增ID的获取，也可以使用MySQL、Redis使用，支持降级的方案配置
 - 配置多个zk，客户端配置多个zk集群，服务端自己去配置datacenter
 - 基于Netty、rpc框架实现
-- 发现当前连接已断开，移除客户端中服务节点缓存

@@ -10,8 +10,7 @@ import com.geega.bsc.id.common.network.IdGeneratorTransportLayer;
 import com.geega.bsc.id.common.network.NetworkReceive;
 import com.geega.bsc.id.common.utils.AddressUtil;
 import com.geega.bsc.id.common.utils.ByteBufferUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -30,9 +29,8 @@ import java.util.concurrent.Executors;
  * @author Jun.An3
  * @date 2022/07/25
  */
+@Slf4j
 public class IdProcessor {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(IdProcessor.class);
 
     private final ZkClient zkClient;
 
@@ -109,7 +107,7 @@ public class IdProcessor {
                                 addInterestOps(key, SelectionKey.OP_READ);
                                 //注册客户端到zk
                                 zkClient.register(channel);
-                                LOGGER.info("创建连接:[{}]", AddressUtil.getConnectionId(channel));
+                                log.info("创建连接:[{}]", AddressUtil.getConnectionId(channel));
                                 break;
                             } else {
                                 key.cancel();
@@ -167,7 +165,7 @@ public class IdProcessor {
                 } catch (IOException e) {
                     connectionState = 2;
                 } catch (Exception e) {
-                    LOGGER.error("读写错误", e);
+                    log.error("读写错误", e);
                 } finally {
                     if (connectionState == 2) {
                         //关闭连接和释放资源
@@ -189,7 +187,7 @@ public class IdProcessor {
         } catch (Exception ignored) {
             //do nothing
         } finally {
-            LOGGER.warn("关闭连接：{}", distributedIdChannel.socketDescription());
+            log.warn("关闭连接：{}", distributedIdChannel.socketDescription());
         }
     }
 
@@ -198,6 +196,8 @@ public class IdProcessor {
             channel.close();
             this.stagedReceives.clear();
             this.executorService.shutdown();
+            this.completedReceives.clear();
+            this.selector.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
