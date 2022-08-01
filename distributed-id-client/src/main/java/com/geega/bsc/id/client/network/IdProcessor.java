@@ -212,8 +212,8 @@ public class IdProcessor {
     }
 
     public void poll(int num) {
-        //放入请求数据
-        distributedIdChannel.setSend(ByteBufferUtil.getSend(id, num), true);
+        //放入请求数据，如果上一次请求还没发送，就不用再次发送
+        distributedIdChannel.setSend(ByteBufferUtil.getSend(id, num));
         //唤醒selector
         selector.wakeup();
     }
@@ -236,7 +236,7 @@ public class IdProcessor {
     private void stagedToCompletedReceives() {
         if (!this.stagedReceives.isEmpty()) {
             Iterator<NetworkReceive> iterator = this.stagedReceives.iterator();
-            if (!distributedIdChannel.isMute()) {
+            if (!distributedIdChannel.isRemovedReadEvent()) {
                 while (iterator.hasNext()) {
                     this.completedReceives.add(iterator.next());
                     iterator.remove();

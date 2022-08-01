@@ -1,8 +1,8 @@
 package com.geega.bsc.id.common.network;
 
 import cn.hutool.core.builder.HashCodeBuilder;
-import com.geega.bsc.id.common.exception.DistributedIdException;
 import com.geega.bsc.id.common.utils.ByteUtil;
+import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -13,6 +13,7 @@ import java.util.Objects;
  * @author Jun.An3
  * @date 2022/07/18
  */
+@Slf4j
 public class DistributedIdChannel {
 
     private final String id;
@@ -61,15 +62,15 @@ public class DistributedIdChannel {
         return id;
     }
 
-    public void mute() {
+    public void removeReadEvent() {
         transportLayer.removeInterestOps(SelectionKey.OP_READ);
     }
 
-    public void unmute() {
+    public void interestReadEvent() {
         transportLayer.addInterestOps(SelectionKey.OP_READ);
     }
 
-    public boolean isMute() {
+    public boolean isRemovedReadEvent() {
         return transportLayer.isMute();
     }
 
@@ -99,15 +100,13 @@ public class DistributedIdChannel {
         return socket.getInetAddress().toString();
     }
 
-    public void setSend(Send send, boolean skip) {
+    public boolean setSend(Send send) {
         if (this.send != null) {
-            if (skip) {
-                return;
-            }
-            throw new DistributedIdException("异常：上一个Send请求未完成，又开始Send请求了");
+            return false;
         }
         this.send = send;
         this.transportLayer.addInterestOps(SelectionKey.OP_WRITE);
+        return true;
     }
 
     public NetworkReceive read() throws IOException {

@@ -23,8 +23,15 @@ public class IdClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IdClient.class);
 
+    /**
+     * 容量：1000
+     */
     private final int capacity;
 
+    /**
+     * trigger必须大于capacity的一半
+     * 必须大于500
+     */
     private final int trigger;
 
     private final int expandNum;
@@ -41,7 +48,7 @@ public class IdClient {
         this.capacity = cacheConfig.getCapacity();
         this.trigger = cacheConfig.getTriggerExpand();
         this.expandNum = capacity - trigger;
-        assert expandNum > 0;
+        assert expandNum < trigger;
         this.idQueue = new LinkedBlockingQueue<>(this.capacity);
         this.processorDispatch = new IdProcessorDispatch(new ZkClient(zkConfig), this);
         //noinspection AlibabaThreadPoolCreation

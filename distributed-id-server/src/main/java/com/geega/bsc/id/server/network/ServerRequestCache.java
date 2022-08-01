@@ -13,6 +13,10 @@ public class ServerRequestCache {
 
     private final ArrayBlockingQueue<Request> requestQueue;
 
+    /**
+     * key = processorid
+     * value = LinkedBlockingQueue<Response>
+     */
     private final ConcurrentHashMap<Integer, LinkedBlockingQueue<Response>> processorResponseQueue;
 
     public ServerRequestCache() {
@@ -35,11 +39,11 @@ public class ServerRequestCache {
         }
     }
 
-    Response getResponse(Integer processorId) {
+    Response getFirstResponse(Integer processorId) {
         Response response = null;
         LinkedBlockingQueue<Response> responses = processorResponseQueue.get(processorId);
         if (responses != null) {
-            response = responses.poll();
+            response = responses.peek();
         }
         return response;
     }
@@ -50,6 +54,13 @@ public class ServerRequestCache {
 
     Request getRequest(@SuppressWarnings("SameParameterValue") long timeout) throws InterruptedException {
         return requestQueue.poll(timeout, TimeUnit.MILLISECONDS);
+    }
+
+    public void removeFirstResponse(int processorId) {
+        LinkedBlockingQueue<Response> responses = processorResponseQueue.get(processorId);
+        if (responses != null) {
+            responses.poll();
+        }
     }
 
 }
