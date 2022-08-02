@@ -28,13 +28,10 @@ public class IdClient {
      */
     private final int capacity;
 
-    /**
-     * trigger必须大于capacity的一半
-     * 必须大于500
-     */
     private final int trigger;
 
-    private final int expandNum;
+    @SuppressWarnings("FieldCanBeLocal")
+    private final int maxPullNum = 80;
 
     private final LinkedBlockingQueue<Long> idQueue;
 
@@ -42,13 +39,13 @@ public class IdClient {
 
     private final IdProcessorDispatch processorDispatch;
 
+    private final long maxWaitMs = 5;
+
     private final AtomicBoolean isExpanding = new AtomicBoolean(false);
 
     public IdClient(ZkConfig zkConfig, CacheConfig cacheConfig) {
         this.capacity = cacheConfig.getCapacity();
-        this.trigger = cacheConfig.getTriggerExpand();
-        this.expandNum = capacity - trigger;
-        assert expandNum < trigger;
+        this.trigger = cacheConfig.getTrigger();
         this.idQueue = new LinkedBlockingQueue<>(this.capacity);
         this.processorDispatch = new IdProcessorDispatch(new ZkClient(zkConfig), this);
         //noinspection AlibabaThreadPoolCreation
@@ -65,22 +62,15 @@ public class IdClient {
         executeOnceSync(capacity);
     }
 
-    public Long id(long ms) {
+    public Long id() {
         try {
-            return idQueue.poll(ms, TimeUnit.MILLISECONDS);
+            return idQueue.poll(maxWaitMs, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             //do nothing
         } finally {
             trigger();
         }
         return null;
-    }
-
-    /**
-     * 获取ID
-     */
-    public Long id() {
-        return id(0);
     }
 
     private void trigger() {
@@ -94,7 +84,7 @@ public class IdClient {
             }
             if (idQueue.size() < trigger && !isExpanding.get()) {
                 if (isExpanding.compareAndSet(false, true)) {
-                    executeOnceAsync(expandNum);
+                    executeOnceAsync(Math.min(capacity - trigger, maxPullNum));
                 }
             }
         } catch (Exception e) {

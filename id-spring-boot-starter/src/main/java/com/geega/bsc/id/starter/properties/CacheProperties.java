@@ -26,6 +26,6 @@ public class CacheProperties {
     /**
      * eg:10
      */
-    Integer triggerExpand = 10;
+    Integer trigger = 10;
 
 }

@@ -79,9 +79,9 @@ zk.connectionTimeoutMs=10000
 
 ```
 # ID缓存容量个数
-id.cache.capacity=40
-# ID缓存少于triggerExpand时，会触发拉取操作，拉取数量为capacity - triggerExpand
-id.cache.triggerExpand=20
+id.cache.capacity=300
+# ID缓存少于trigger时，会触发拉取操作，拉取数量为capacity - trigger
+id.cache.trigger=220
 # zk命名空间
 id.zk.namespace=id
 # zk的连接，集群时，例子：127.0.0.1:2181，127.0.0.1:2182
@@ -114,6 +114,7 @@ id.zk.connectionTimeoutMs=10000
 - ~~优化：客户端可以选择【最少客户端连接】的服务端，/client/ip1:port1-ip2:port2，然后客户端监听/client目录~~
 - ~~压测出现问题：DistributedIdChannel.setSend(Send) throw new DistributedIdException("异常：上一个Send请求未完成，又开始Send请求了");~~
 - ~~发现当前连接已断开，移除客户端中服务节点缓存~~
+- 优化一次请求的包大小，小于一个TCP的最大bytes数，1460bytes，目前经过测试拉取80个id = 1361 bytes，设置为最大个数
 - 根据不同网络，硬件资源，输出QPS压测数据表格
 - 目前是使用ZK实现服务注册以及自增ID的获取，也可以使用MySQL、Redis使用，支持降级的方案配置
 - 配置多个zk，客户端配置多个zk集群，服务端自己去配置datacenter

@@ -1,7 +1,7 @@
 id:
   cache:
     capacity: 100
-    triggerExpand: 80
+    trigger: 80
   zk:
     namespace: id
     connection: 127.0.0.1:2181

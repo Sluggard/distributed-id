@@ -1,7 +1,7 @@
 id:
   cache:
     capacity: 40
-    triggerExpand: 20
+    trigger: 20
     initWaitTimeMs: 5000
   zk:
     -
