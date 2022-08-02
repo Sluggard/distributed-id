@@ -61,7 +61,6 @@ public class ByteBufferUtil {
         String result = null;
         try {
             if (receives != null && receives.limit() > 0) {
-                System.out.println("数据大小：" + receives.remaining());
                 CharBuffer charBuffer = DECODER.decode(receives);
                 return charBuffer.toString();
             }
