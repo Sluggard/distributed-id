@@ -58,7 +58,6 @@ public class ByteBufferUtil {
     }
 
     public static String byteBufferToString(ByteBuffer receives) {
-        String result = null;
         try {
             if (receives != null && receives.limit() > 0) {
                 CharBuffer charBuffer = DECODER.decode(receives);
@@ -67,7 +66,7 @@ public class ByteBufferUtil {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return result;
+        return null;
     }
 
     private static ByteBuffer stringToByteBuffer(String msg) {
