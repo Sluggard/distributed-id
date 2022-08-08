@@ -11,6 +11,7 @@ import java.util.Enumeration;
 import java.util.List;
 
 public class IpUtil {
+
     private static final Logger logger = LoggerFactory.getLogger(IpUtil.class);
 
     public static String getIp() {
@@ -71,4 +72,5 @@ public class IpUtil {
         }
         return ipList;
     }
+
 }

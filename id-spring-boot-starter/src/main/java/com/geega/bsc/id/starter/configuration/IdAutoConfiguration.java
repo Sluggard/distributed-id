@@ -34,7 +34,7 @@ public class IdAutoConfiguration {
 
         CacheConfig cacheConfig = new CacheConfig();
         cacheConfig.setCapacity(cacheProperties.getCapacity());
-        cacheConfig.setTriggerExpand(cacheProperties.getTriggerExpand());
+        cacheConfig.setTrigger(cacheProperties.getTrigger());
         return new IdClient(zkConfig, cacheConfig);
     }
 

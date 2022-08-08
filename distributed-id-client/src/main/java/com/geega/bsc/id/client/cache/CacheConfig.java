@@ -12,11 +12,11 @@ public class CacheConfig {
     /**
      * eg:20
      */
-    Integer capacity = 20;
+    Integer capacity = 300;
 
     /**
      * eg:10
      */
-    Integer triggerExpand = 10;
+    Integer trigger = 220;
 
 }

@@ -6,8 +6,7 @@ import com.geega.bsc.id.common.network.IdGeneratorTransportLayer;
 import com.geega.bsc.id.common.network.NetworkReceive;
 import com.geega.bsc.id.common.network.Send;
 import com.geega.bsc.id.common.utils.AddressUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -26,10 +25,13 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * @author Jun.An3
  * @date 2022/07/18
  */
+@Slf4j
 public class ServerProcessor extends Thread {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ServerProcessor.class);
-
+    /**
+     * key = localip:localpport-remoteip:remoteport
+     * value = SocketChannel
+     */
     private final ConcurrentHashMap<String, DistributedIdChannel> channels;
 
     private final List<NetworkReceive> completedReceives;
@@ -38,8 +40,14 @@ public class ServerProcessor extends Thread {
 
     private final List<Send> completedSends;
 
+    /**
+     * 从ServerAcceptor中来的数据
+     */
     private final ConcurrentLinkedQueue<SocketChannel> newConnections;
 
+    /**
+     * 待关闭的连接
+     */
     private final ConcurrentLinkedQueue<DistributedIdChannel> waitCloseConnections;
 
     private final ServerRequestCache requestChannel;
@@ -69,7 +77,7 @@ public class ServerProcessor extends Thread {
         try {
             this.selector = Selector.open();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Selector.open()异常", e);
         }
     }
 
@@ -82,7 +90,7 @@ public class ServerProcessor extends Thread {
                 configureNewConnections();
                 //处理数据,将数据发送出去,就是写
                 processNewResponses();
-                //处理事件
+                //处理事件(读，写)
                 handleEvent();
                 //将一个业务完成read时的数据放入completedReceives中
                 stagedToCompletedReceives();
@@ -107,7 +115,7 @@ public class ServerProcessor extends Thread {
                 DistributedIdChannel distributedIdChannel = channels.get(completedReceive.source());
                 Request request = new Request(selector, completedReceive.payload(), distributedIdChannel.id(), processorId);
                 requestChannel.addRequest(request);
-                distributedIdChannel.mute();
+                distributedIdChannel.removeReadEvent();
             }
         }
     }
@@ -146,13 +154,13 @@ public class ServerProcessor extends Thread {
                     }
                 } catch (IOException exception) {
                     this.waitCloseConnections.offer(distributedIdChannel);
-                    LOGGER.error("IO异常，连接：{}", distributedIdChannel.socketDescription());
+                    log.error("IO异常，连接：{}", distributedIdChannel.socketDescription());
                 } catch (Exception e) {
-                    LOGGER.error("未知异常", e);
+                    log.error("未知异常", e);
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("未知异常", e);
+            log.error("未知异常", e);
         }
     }
 
@@ -160,20 +168,27 @@ public class ServerProcessor extends Thread {
      * 一次只处理一个数据
      */
     private void processNewResponses() {
-        Response curr = requestChannel.getResponse(processorId);
+        //queue.peek，只取数据，不移除
+        Response curr = requestChannel.getFirstResponse(processorId);
         try {
             if (curr != null) {
-                sendResponse(curr);
+                if (sendResponse(curr)) {
+                    //queue.poll，去数据，并移除
+                    requestChannel.removeFirstResponse(processorId);
+                }
             }
         } catch (Exception e) {
             //do nothing
-            LOGGER.error("发送请求异常", e);
+            log.error("发送请求异常", e);
         }
     }
 
-    private void sendResponse(Response curr) {
+    /**
+     * @return true：可以发送 false：不能发送
+     */
+    private boolean sendResponse(Response curr) {
         DistributedIdChannel channel = channels.get(curr.getDestination());
-        channel.setSend(curr.getSend(), false);
+        return channel.setSend(curr.getSend());
     }
 
     private void configureNewConnections() {
@@ -182,14 +197,14 @@ public class ServerProcessor extends Thread {
             try {
                 if (channel != null) {
                     String connectionId = AddressUtil.getConnectionId(channel);
-                    LOGGER.info("创建连接：[{}]", connectionId);
+                    log.info("创建连接：[{}]", connectionId);
                     SelectionKey selectionKey = channel.register(selector, SelectionKey.OP_READ);
                     DistributedIdChannel distributedIdChannel = buildChannel(connectionId, selectionKey, 1024);
                     selectionKey.attach(distributedIdChannel);
                     this.channels.put(connectionId, distributedIdChannel);
                 }
             } catch (Exception e) {
-                LOGGER.error("创建连接失败", e);
+                log.error("创建连接失败", e);
             }
         }
     }
@@ -210,7 +225,7 @@ public class ServerProcessor extends Thread {
         for (Send send : completedSends) {
             String destination = send.destination();
             DistributedIdChannel distributedIdChannel = channels.get(destination);
-            distributedIdChannel.unmute();
+            distributedIdChannel.interestReadEvent();
         }
     }
 
@@ -222,11 +237,11 @@ public class ServerProcessor extends Thread {
             DistributedIdChannel distributedIdChannel = waitCloseConnections.poll();
             try {
                 if (distributedIdChannel != null) {
-                    LOGGER.warn("关闭异常连接:{}", distributedIdChannel.socketDescription());
+                    log.warn("关闭异常连接:{}", distributedIdChannel.socketDescription());
                     distributedIdChannel.close();
                 }
             } catch (Exception e) {
-                LOGGER.error("关闭连接异常", e);
+                log.error("关闭连接异常", e);
             }
         }
     }
@@ -249,7 +264,7 @@ public class ServerProcessor extends Thread {
             while (iter.hasNext()) {
                 Map.Entry<DistributedIdChannel, Deque<NetworkReceive>> entry = iter.next();
                 DistributedIdChannel channel = entry.getKey();
-                if (!channel.isMute()) {
+                if (!channel.isRemovedReadEvent()) {
                     Deque<NetworkReceive> deque = entry.getValue();
                     NetworkReceive networkReceive = deque.poll();
                     this.completedReceives.add(networkReceive);

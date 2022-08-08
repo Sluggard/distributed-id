@@ -2,7 +2,7 @@ package com.geega.bsc.id.common.utils;
 
 /**
  * twitter的snowflake算法 -- java实现
- * 协议格式： 0 - 41位时间戳 - 5位数据中心标识 - 5位机器标识 - 12位序列号
+ * 协议格式： 0 - 41位时间戳 - 2位数据中心标识 - 8位机器标识 - 12位序列号
  *
  * @author Yd
  */
@@ -16,14 +16,14 @@ public class SnowFlake {
 
     /**
      * 每一部分占用的位数
-     * 序列号占用的位数(1024个序号)
+     * 序列号占用的位数(4096个序号)
      */
-    private final static long SEQUENCE_BIT = 10;
+    private final static long SEQUENCE_BIT = 12;
 
     /**
-     * 机器标识占用的位数(1024个机器)
+     * 机器标识占用的位数(256个机器)
      */
-    private final static long MACHINE_BIT = 10;
+    private final static long MACHINE_BIT = 8;
 
     /**
      * 数据中心占用的位数(最多三个数据中心)
@@ -78,10 +78,10 @@ public class SnowFlake {
      */
     public SnowFlake(long dataCenterId, long machineId) {
         if (dataCenterId > MAX_DATA_CENTER_NUM || dataCenterId < 0) {
-            throw new IllegalArgumentException("datacenterId can't be greater than MAX_DATACENTER_NUM or less than 0");
+            throw new IllegalArgumentException("datacenterId不能大于MAX_DATACENTER_NUM，不能小于0");
         }
         if (machineId > MAX_MACHINE_NUM || machineId < 0) {
-            throw new IllegalArgumentException("machineId can't be greater than MAX_MACHINE_NUM or less than 0");
+            throw new IllegalArgumentException("machineId不能大于MAX_MACHINE_NUM，不能小于0");
         }
         this.dataCenterId = dataCenterId;
         this.machineId = machineId;

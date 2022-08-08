@@ -1,5 +1,6 @@
 package com.geega.bsc.id.common.network;
 
+import com.geega.bsc.id.common.exception.DistributedIdException;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -51,7 +52,7 @@ public class ByteBufferSend implements Send {
     public long writeTo(GatheringByteChannel channel) throws IOException {
         long written = channel.write(buffers);
         if (written < 0) {
-            throw new EOFException("Wrote negative bytes to channel. This shouldn't happen.");
+            throw new DistributedIdException("写负数，不可能发生");
         }
         remaining -= written;
         if (channel instanceof TransportLayer) {
