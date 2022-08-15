@@ -98,3 +98,4 @@ id.zk.connectionTimeoutMs=10000
 - 目前是使用ZK实现服务注册以及自增ID的获取，也可以使用MySQL、Redis使用，支持降级的方案配置
 - 配置多个zk，客户端配置多个zk集群，服务端自己去配置datacenter
 - 基于Netty、rpc框架实现
+- 优化序列化，反序列方式，提供更高效的方式，不用fastjson，请求和响应数据结构修改一下
