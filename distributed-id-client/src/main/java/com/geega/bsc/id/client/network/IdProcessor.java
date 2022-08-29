@@ -53,7 +53,7 @@ public class IdProcessor {
 
     private final ExecutorService executorService;
 
-    private SocketChannel socketChannel;
+    private SocketChannel channel;
 
     public IdProcessor(ZkClient zkClient, String id, IdClient generator, ServerNode nodeAddress) {
         this.zkClient = zkClient;
@@ -73,17 +73,16 @@ public class IdProcessor {
 
     private void init(String ip, int port) {
         try {
-            SocketChannel channel = SocketChannel.open();
-            socketChannel = channel;
+            this.channel = SocketChannel.open();
             channel.configureBlocking(false);
             channel.socket().setTcpNoDelay(true);
             channel.socket().setKeepAlive(true);
             channel.socket().setSendBufferSize(1024);
             channel.connect(new InetSocketAddress(ip, port));
-            selector = Selector.open();
+            this.selector = Selector.open();
 
             //注册到selector，监听事件为连接事件
-            SelectionKey selectionKey = channel.register(selector, SelectionKey.OP_CONNECT);
+            SelectionKey selectionKey = channel.register(this.selector, SelectionKey.OP_CONNECT);
 
             distributedIdChannel = buildChannel(String.valueOf(id), selectionKey, 1024 * 1024);
             selectionKey.attach(distributedIdChannel);
@@ -91,8 +90,8 @@ public class IdProcessor {
             //等待连接上
             //noinspection LoopStatementThatDoesntLoop
             while (true) {
-                selector.select();
-                Iterator<SelectionKey> keysIterator = selector.selectedKeys().iterator();
+                this.selector.select();
+                Iterator<SelectionKey> keysIterator = this.selector.selectedKeys().iterator();
                 while (keysIterator.hasNext()) {
                     SelectionKey key = keysIterator.next();
                     keysIterator.remove();
@@ -130,7 +129,7 @@ public class IdProcessor {
     }
 
     public SocketChannel getSocketChannel() {
-        return this.socketChannel;
+        return this.channel;
     }
 
     class Sender implements Runnable {
@@ -214,7 +213,7 @@ public class IdProcessor {
     public void poll(int num) {
         //放入请求数据，如果上一次请求还没发送，就不用再次发送
         distributedIdChannel.setSend(ByteBufferUtil.getSend(id, num));
-        //唤醒selector
+        //不管怎样，唤醒selector
         selector.wakeup();
     }
 
