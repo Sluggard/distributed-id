@@ -24,7 +24,7 @@ public class Main {
         //00000011
         //00000110
         //00000111
-        System.out.println((1 & ?) == 0);
+        System.out.println((1 & 0) == 0);
         //00000001
         //00000000
         //00000000

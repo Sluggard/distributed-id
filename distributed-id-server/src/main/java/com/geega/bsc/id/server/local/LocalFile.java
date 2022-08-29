@@ -52,7 +52,7 @@ public class LocalFile {
         saveWorkId(file, workId);
     }
 
-    private void saveWorkId(String path, Integer workId) {
+    private synchronized void saveWorkId(String path, Integer workId) {
         PrintStream stream;
         try {
             //写入的文件path

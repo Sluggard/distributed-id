@@ -14,7 +14,6 @@ import com.geega.bsc.id.server.network.ServerRequestHandler;
 import com.geega.bsc.id.server.zk.ZkServer;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
-import java.util.Objects;
 import java.util.Properties;
 
 /**
@@ -25,8 +24,7 @@ import java.util.Properties;
 public class IdServer {
 
     public static void main(String[] args) throws Exception {
-        log.info("info");
-        log.debug("debug");
+
         //同步组件
         Sync sync = new Sync();
 
@@ -44,7 +42,7 @@ public class IdServer {
         acceptor.start();
 
         //请求处理器
-        ServerRequestHandler requestHandler = new ServerRequestHandler(requestChannel, new SnowFlake(serverConfig.getIdDatacenter(), zkServer.getWorkId()));
+        ServerRequestHandler requestHandler = new ServerRequestHandler(requestChannel, new SnowFlake(serverConfig.getIdDataCenter(), zkServer.getWorkId()));
         requestHandler.start();
 
         //hold住
@@ -80,7 +78,7 @@ public class IdServer {
             serverConfig.setIp(ip);
             serverConfig.setPort(Integer.valueOf(port));
             serverConfig.setProcessor(Integer.valueOf(properties.getProperty(ConfigConst.NIO_PROCESSOR, "3")));
-            serverConfig.setIdDatacenter(Long.valueOf(properties.getProperty(ConfigConst.ID_DATACENTER, "1")));
+            serverConfig.setIdDataCenter(Long.valueOf(properties.getProperty(ConfigConst.ID_DATA_CENTER, "1")));
             serverConfig.setZkConnection(properties.getProperty(ConfigConst.ZK_CONNECTION, "127.0.0.1:2181"));
             serverConfig.setZkNamespace(properties.getProperty(ConfigConst.ZK_NAMESPACE, "default"));
             serverConfig.setZkConnectionTimeoutMs(Integer.valueOf(properties.getProperty(ConfigConst.ZK_CONNECTION_TIMEOUT_MS, "10000")));

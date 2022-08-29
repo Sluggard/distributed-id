@@ -12,6 +12,4 @@ public interface Send {
 
     long writeTo(GatheringByteChannel channel) throws IOException;
 
-    long size();
-
 }

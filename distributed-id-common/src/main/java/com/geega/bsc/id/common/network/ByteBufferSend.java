@@ -14,9 +14,7 @@ public class ByteBufferSend implements Send {
 
     private final String destination;
 
-    private final int size;
-
-    protected final ByteBuffer[] buffers;
+    private final ByteBuffer[] buffers;
 
     private int remaining;
 
@@ -29,7 +27,6 @@ public class ByteBufferSend implements Send {
         for (ByteBuffer buffer : buffers) {
             remaining += buffer.remaining();
         }
-        this.size = remaining;
     }
 
     @Override
@@ -41,11 +38,6 @@ public class ByteBufferSend implements Send {
     public boolean completed() {
         //判断数据是否全部写完
         return remaining <= 0 && !pending;
-    }
-
-    @Override
-    public long size() {
-        return this.size;
     }
 
     @Override

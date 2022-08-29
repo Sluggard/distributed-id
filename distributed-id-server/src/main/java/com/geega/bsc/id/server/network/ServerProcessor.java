@@ -265,7 +265,7 @@ public class ServerProcessor extends Thread {
                 Map.Entry<DistributedIdChannel, Deque<NetworkReceive>> entry = iter.next();
                 DistributedIdChannel channel = entry.getKey();
                 //selectionKey是否处于活跃状态，处于活跃状态才处理
-                if (!channel.isRemovedReadEvent()) {
+                if (channel.isReadEvent()) {
                     Deque<NetworkReceive> deque = entry.getValue();
                     NetworkReceive networkReceive = deque.poll();
                     this.completedReceives.add(networkReceive);

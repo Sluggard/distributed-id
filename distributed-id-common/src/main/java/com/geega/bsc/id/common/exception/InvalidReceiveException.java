@@ -10,8 +10,4 @@ public class InvalidReceiveException extends DistributedIdException {
         super(message);
     }
 
-    public InvalidReceiveException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
 }

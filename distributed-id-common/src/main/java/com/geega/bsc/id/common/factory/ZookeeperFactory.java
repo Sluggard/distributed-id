@@ -41,11 +41,11 @@ public class ZookeeperFactory {
         );
     }
 
-    public ZookeeperFactory(String namespace,
-                            String connection,
-                            Integer sessionTimeoutMs,
-                            Integer connectionTimeoutMs,
-                            RetryPolicy retryPolicy) {
+    private ZookeeperFactory(String namespace,
+                             String connection,
+                             Integer sessionTimeoutMs,
+                             Integer connectionTimeoutMs,
+                             RetryPolicy retryPolicy) {
         assert namespace != null;
         assert connection != null;
         assert sessionTimeoutMs != null;

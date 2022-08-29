@@ -16,7 +16,7 @@ public class ServerConfig {
 
     private Integer processor;
 
-    private Long idDatacenter;
+    private Long idDataCenter;
 
     private String zkNamespace;
 

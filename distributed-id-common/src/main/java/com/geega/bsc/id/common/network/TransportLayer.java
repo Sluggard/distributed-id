@@ -1,24 +1,19 @@
 package com.geega.bsc.id.common.network;
 
 import java.io.IOException;
-import java.nio.channels.FileChannel;
 import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.ScatteringByteChannel;
 import java.nio.channels.SocketChannel;
 
+/**
+ * @author Jun.An3
+ * @date 2022/08/29
+ */
 public interface TransportLayer extends ScatteringByteChannel, GatheringByteChannel {
-
-    boolean ready();
 
     boolean finishConnect() throws IOException;
 
-    void disconnect();
-
-    boolean isConnected();
-
     SocketChannel socketChannel();
-
-    void handshake() throws IOException;
 
     boolean hasPendingWrites();
 
@@ -27,7 +22,5 @@ public interface TransportLayer extends ScatteringByteChannel, GatheringByteChan
     void removeInterestOps(int ops);
 
     boolean isMute();
-
-    long transferFrom(FileChannel fileChannel, long position, long count) throws IOException;
 
 }

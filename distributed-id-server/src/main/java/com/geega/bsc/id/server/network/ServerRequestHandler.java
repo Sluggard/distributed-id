@@ -76,7 +76,6 @@ public class ServerRequestHandler extends Thread {
 
         Response response = new Response(
                 request.getConnectionId(),
-                request.getProcessorId(),
                 ByteBufferUtil.getSendForServer(request.getConnectionId(), ids)
         );
 

@@ -7,11 +7,13 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.ScatteringByteChannel;
 
+/**
+ * @author Jun.An3
+ * @date 2022/08/29
+ */
 public class NetworkReceive implements Receive {
 
-    public final static String UNKNOWN_SOURCE = "";
-
-    public final static int UNLIMITED = -1;
+    private final static int UNLIMITED = -1;
 
     private final String source;
 
@@ -21,30 +23,11 @@ public class NetworkReceive implements Receive {
 
     private ByteBuffer buffer;
 
-
-    public NetworkReceive(String source, ByteBuffer buffer) {
-        this.source = source;
-        this.buffer = buffer;
-        this.size = null;
-        this.maxSize = UNLIMITED;
-    }
-
-    public NetworkReceive(String source) {
-        this.source = source;
-        this.size = ByteBuffer.allocate(4);
-        this.buffer = null;
-        this.maxSize = UNLIMITED;
-    }
-
-    public NetworkReceive(int maxSize, String source) {
+    NetworkReceive(int maxSize, String source) {
         this.source = source;
         this.size = ByteBuffer.allocate(4);
         this.buffer = null;
         this.maxSize = maxSize;
-    }
-
-    public NetworkReceive() {
-        this(UNKNOWN_SOURCE);
     }
 
     @Override

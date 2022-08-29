@@ -26,11 +26,6 @@ public class IdGeneratorTransportLayer implements TransportLayer {
     }
 
     @Override
-    public boolean ready() {
-        return true;
-    }
-
-    @Override
     public boolean finishConnect() throws IOException {
         boolean connected = this.socketChannel.finishConnect();
         if (connected) {
@@ -38,11 +33,6 @@ public class IdGeneratorTransportLayer implements TransportLayer {
         }
 
         return connected;
-    }
-
-    @Override
-    public void disconnect() {
-        this.key.cancel();
     }
 
     @Override
@@ -56,11 +46,6 @@ public class IdGeneratorTransportLayer implements TransportLayer {
     }
 
     @Override
-    public boolean isConnected() {
-        return this.socketChannel.isConnected();
-    }
-
-    @Override
     public void close() throws IOException {
         try {
             this.socketChannel.socket().close();
@@ -70,10 +55,6 @@ public class IdGeneratorTransportLayer implements TransportLayer {
             this.key.cancel();
         }
 
-    }
-
-    @Override
-    public void handshake() {
     }
 
     @Override
@@ -128,19 +109,6 @@ public class IdGeneratorTransportLayer implements TransportLayer {
     @Override
     public boolean isMute() {
         return this.key.isValid() && (this.key.interestOps() & 1) == 0;
-    }
-
-    /**
-     * 从文件映射位置，拷贝文件数据至socketChannel中
-     * @param fileChannel
-     * @param position
-     * @param count
-     * @return
-     * @throws IOException
-     */
-    @Override
-    public long transferFrom(FileChannel fileChannel, long position, long count) throws IOException {
-        return fileChannel.transferTo(position, count, this.socketChannel);
     }
 
 }

@@ -8,15 +8,12 @@ import com.geega.bsc.id.common.network.Send;
  */
 public class Response {
 
-    private final int processorId;
-
     private final String destination;
 
     private final Send send;
 
-    public Response(String destination, int processorId, Send send) {
+    public Response(String destination, Send send) {
         this.destination = destination;
-        this.processorId = processorId;
         this.send = send;
     }
 
@@ -26,10 +23,6 @@ public class Response {
 
     public Send getSend() {
         return this.send;
-    }
-
-    public int getProcessorId() {
-        return this.processorId;
     }
 
 }

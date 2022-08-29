@@ -31,10 +31,7 @@ public class ServerNode implements Serializable, Comparable<ServerNode> {
         if (!Objects.equals(ip, that.getIp())) {
             return false;
         }
-        if (!Objects.equals(port, that.getPort())) {
-            return false;
-        }
-        return true;
+        return Objects.equals(port, that.getPort());
     }
 
     @Override

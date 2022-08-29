@@ -39,8 +39,6 @@ public class IdClient {
 
     private final IdProcessorDispatch processorDispatch;
 
-    private final long maxWaitMs = 5;
-
     private final AtomicBoolean isExpanding = new AtomicBoolean(false);
 
     public IdClient(ZkConfig zkConfig, CacheConfig cacheConfig) {
@@ -62,15 +60,19 @@ public class IdClient {
         executeOnceSync(capacity);
     }
 
-    public Long id() {
+    public Long id(long waitMs) {
         try {
-            return idQueue.poll(maxWaitMs, TimeUnit.MILLISECONDS);
+            return idQueue.poll(waitMs, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             //do nothing
         } finally {
             trigger();
         }
         return null;
+    }
+
+    public Long id() {
+        return id(0);
     }
 
     private void trigger() {

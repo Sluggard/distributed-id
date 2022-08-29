@@ -4,7 +4,6 @@ import cn.hutool.core.builder.HashCodeBuilder;
 import com.geega.bsc.id.common.utils.ByteUtil;
 import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.channels.SelectionKey;
 import java.util.Objects;
@@ -36,23 +35,9 @@ public class DistributedIdChannel {
         ByteUtil.closeAll(transportLayer);
     }
 
-    public void prepare() throws IOException {
-        if (!transportLayer.ready()) {
-            transportLayer.handshake();
-        }
-    }
-
-    public void disconnect() {
-        transportLayer.disconnect();
-    }
-
 
     public boolean finishConnect() throws IOException {
         return transportLayer.finishConnect();
-    }
-
-    public boolean isConnected() {
-        return transportLayer.isConnected();
     }
 
     public String id() {
@@ -67,20 +52,8 @@ public class DistributedIdChannel {
         transportLayer.addInterestOps(SelectionKey.OP_READ);
     }
 
-    public boolean isRemovedReadEvent() {
-        return transportLayer.isMute();
-    }
-
-    public boolean ready() {
-        return transportLayer.ready();
-    }
-
-    public boolean hasSend() {
-        return send != null;
-    }
-
-    public InetAddress socketAddress() {
-        return transportLayer.socketChannel().socket().getInetAddress();
+    public boolean isReadEvent() {
+        return !transportLayer.isMute();
     }
 
     public String socketDescription() {
@@ -125,8 +98,8 @@ public class DistributedIdChannel {
         return result;
     }
 
-    private long receive(NetworkReceive receive) throws IOException {
-        return receive.readFrom(transportLayer);
+    private void receive(NetworkReceive receive) throws IOException {
+        receive.readFrom(transportLayer);
     }
 
     private boolean send(Send send) throws IOException {

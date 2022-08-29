@@ -235,7 +235,7 @@ public class IdProcessor {
     private void stagedToCompletedReceives() {
         if (!this.stagedReceives.isEmpty()) {
             Iterator<NetworkReceive> iterator = this.stagedReceives.iterator();
-            if (!distributedIdChannel.isRemovedReadEvent()) {
+            if (distributedIdChannel.isReadEvent()) {
                 while (iterator.hasNext()) {
                     this.completedReceives.add(iterator.next());
                     iterator.remove();
