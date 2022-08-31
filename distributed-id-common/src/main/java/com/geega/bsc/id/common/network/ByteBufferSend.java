@@ -1,7 +1,6 @@
 package com.geega.bsc.id.common.network;
 
 import com.geega.bsc.id.common.exception.DistributedIdException;
-import java.io.EOFException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.GatheringByteChannel;
@@ -18,10 +17,7 @@ public class ByteBufferSend implements Send {
 
     private int remaining;
 
-    private boolean pending = false;
-
     public ByteBufferSend(String destination, ByteBuffer... buffers) {
-        super();
         this.destination = destination;
         this.buffers = buffers;
         for (ByteBuffer buffer : buffers) {
@@ -37,7 +33,7 @@ public class ByteBufferSend implements Send {
     @Override
     public boolean completed() {
         //判断数据是否全部写完
-        return remaining <= 0 && !pending;
+        return remaining <= 0;
     }
 
     @Override
@@ -47,9 +43,6 @@ public class ByteBufferSend implements Send {
             throw new DistributedIdException("写负数，不可能发生");
         }
         remaining -= written;
-        if (channel instanceof TransportLayer) {
-            pending = ((TransportLayer) channel).hasPendingWrites();
-        }
         return written;
     }
 

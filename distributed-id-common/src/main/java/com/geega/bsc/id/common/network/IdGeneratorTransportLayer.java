@@ -2,11 +2,12 @@ package com.geega.bsc.id.common.network;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
 /**
+ * 传输层
+ *
  * @author Jun.An3
  * @date 2022/07/18
  */
@@ -29,7 +30,18 @@ public class IdGeneratorTransportLayer implements TransportLayer {
     public boolean finishConnect() throws IOException {
         boolean connected = this.socketChannel.finishConnect();
         if (connected) {
-            this.key.interestOps(this.key.interestOps() & -9 | 1);
+            //建立连接后，关注read事件，移除accept、write事件
+            //00000000
+            // &
+            //10001001
+            // |
+            //00000001
+            //
+            //00000001 1 read
+            //00000100 4 write
+            //00001000 8 connect
+            //00010000 16 accept
+            this.key.interestOps(this.key.interestOps() & -9 | SelectionKey.OP_READ);
         }
 
         return connected;
@@ -51,7 +63,7 @@ public class IdGeneratorTransportLayer implements TransportLayer {
             this.socketChannel.socket().close();
             this.socketChannel.close();
         } finally {
-            this.key.attach((Object) null);
+            this.key.attach(null);
             this.key.cancel();
         }
 
@@ -85,11 +97,6 @@ public class IdGeneratorTransportLayer implements TransportLayer {
     @Override
     public long write(ByteBuffer[] srcs, int offset, int length) throws IOException {
         return this.socketChannel.write(srcs, offset, length);
-    }
-
-    @Override
-    public boolean hasPendingWrites() {
-        return false;
     }
 
     @Override

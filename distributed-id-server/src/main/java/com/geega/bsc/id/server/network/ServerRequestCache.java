@@ -39,7 +39,7 @@ public class ServerRequestCache {
         }
     }
 
-    Response getFirstResponse(Integer processorId) {
+    Response selectFirstResponse(Integer processorId) {
         Response response = null;
         LinkedBlockingQueue<Response> responses = processorResponseQueue.get(processorId);
         if (responses != null) {

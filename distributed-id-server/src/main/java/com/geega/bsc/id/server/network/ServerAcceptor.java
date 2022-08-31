@@ -83,7 +83,8 @@ public class ServerAcceptor extends Thread {
                                 socketChannel.configureBlocking(false);
                                 socketChannel.socket().setTcpNoDelay(true);
                                 socketChannel.socket().setKeepAlive(true);
-                                socketChannel.socket().setSendBufferSize(1024);
+                                socketChannel.socket().setReceiveBufferSize(1024);
+                                socketChannel.socket().setSendBufferSize(2 * 1024);
                                 processor.addChannel(socketChannel);
                             } catch (Exception e) {
                                 LOGGER.error("无法创建连接", e);

@@ -21,7 +21,7 @@ public class DistributedIdChannel {
 
     private final int maxReceiveSize;
 
-    private NetworkReceive receive;
+    private ByteBufferReceive receive;
 
     private Send send;
 
@@ -44,15 +44,19 @@ public class DistributedIdChannel {
         return id;
     }
 
+    public void removeConnectionEvent() {
+        this.transportLayer.removeInterestOps(SelectionKey.OP_CONNECT);
+    }
+
     public void removeReadEvent() {
-        transportLayer.removeInterestOps(SelectionKey.OP_READ);
+        this.transportLayer.removeInterestOps(SelectionKey.OP_READ);
     }
 
     public void interestReadEvent() {
-        transportLayer.addInterestOps(SelectionKey.OP_READ);
+        this.transportLayer.addInterestOps(SelectionKey.OP_READ);
     }
 
-    public boolean isReadEvent() {
+    public boolean isNotMute() {
         return !transportLayer.isMute();
     }
 
@@ -73,11 +77,11 @@ public class DistributedIdChannel {
         return true;
     }
 
-    public NetworkReceive read() throws IOException {
-        NetworkReceive result = null;
+    public ByteBufferReceive read() throws IOException {
+        ByteBufferReceive result = null;
 
         if (receive == null) {
-            receive = new NetworkReceive(maxReceiveSize, id);
+            receive = new ByteBufferReceive(maxReceiveSize, id);
         }
 
         receive(receive);
@@ -98,7 +102,7 @@ public class DistributedIdChannel {
         return result;
     }
 
-    private void receive(NetworkReceive receive) throws IOException {
+    private void receive(ByteBufferReceive receive) throws IOException {
         receive.readFrom(transportLayer);
     }
 

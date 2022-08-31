@@ -11,7 +11,7 @@ import java.nio.channels.ScatteringByteChannel;
  * @author Jun.An3
  * @date 2022/08/29
  */
-public class NetworkReceive implements Receive {
+public class ByteBufferReceive implements Receive {
 
     private final static int UNLIMITED = -1;
 
@@ -23,7 +23,7 @@ public class NetworkReceive implements Receive {
 
     private ByteBuffer buffer;
 
-    NetworkReceive(int maxSize, String source) {
+    ByteBufferReceive(int maxSize, String source) {
         this.source = source;
         this.size = ByteBuffer.allocate(4);
         this.buffer = null;
