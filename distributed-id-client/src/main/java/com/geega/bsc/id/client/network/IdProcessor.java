@@ -8,6 +8,7 @@ import com.geega.bsc.id.common.exception.DistributedIdException;
 import com.geega.bsc.id.common.network.ByteBufferReceive;
 import com.geega.bsc.id.common.network.DistributedIdChannel;
 import com.geega.bsc.id.common.network.IdGeneratorTransportLayer;
+import com.geega.bsc.id.common.network.Send;
 import com.geega.bsc.id.common.utils.AddressUtil;
 import com.geega.bsc.id.common.utils.ByteBufferUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -245,7 +246,7 @@ public class IdProcessor {
         DistributedIdChannel channel;
         try {
             IdGeneratorTransportLayer transportLayer = new IdGeneratorTransportLayer(key);
-            channel = new DistributedIdChannel(id, transportLayer, maxReceiveSize);
+            channel = new DistributedIdChannel(transportLayer, maxReceiveSize);
             key.attach(channel);
         } catch (Exception e) {
             throw new DistributedIdException(e);

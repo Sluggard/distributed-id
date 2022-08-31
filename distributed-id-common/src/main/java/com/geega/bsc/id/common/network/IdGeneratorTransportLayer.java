@@ -1,5 +1,8 @@
 package com.geega.bsc.id.common.network;
 
+import com.geega.bsc.id.common.utils.AddressUtil;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -11,15 +14,25 @@ import java.nio.channels.SocketChannel;
  * @author Jun.An3
  * @date 2022/07/18
  */
+@Slf4j
 public class IdGeneratorTransportLayer implements TransportLayer {
 
     private final SelectionKey key;
 
     private final SocketChannel socketChannel;
 
+    private final String connectionId;
+
     public IdGeneratorTransportLayer(SelectionKey key) {
         this.key = key;
         this.socketChannel = (SocketChannel) key.channel();
+        this.connectionId = AddressUtil.getConnectionId(socketChannel);
+        log.info("创建连接：[{}]", connectionId);
+    }
+
+    @Override
+    public String getConnectionId() {
+        return this.connectionId;
     }
 
     private boolean keyIsValid() {
@@ -43,7 +56,6 @@ public class IdGeneratorTransportLayer implements TransportLayer {
             //00010000 16 accept
             this.key.interestOps(this.key.interestOps() & -9 | SelectionKey.OP_READ);
         }
-
         return connected;
     }
 

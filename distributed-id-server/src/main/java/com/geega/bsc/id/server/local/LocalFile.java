@@ -4,6 +4,7 @@ import com.geega.bsc.id.common.exception.DistributedIdException;
 import lombok.Builder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -53,10 +54,7 @@ public class LocalFile {
     }
 
     private synchronized void saveWorkId(String path, Integer workId) {
-        PrintStream stream;
-        try {
-            //写入的文件path
-            stream = new PrintStream(path);
+        try (PrintStream stream = new PrintStream(path)) {
             //写入的字符串
             stream.print(workId);
             LOGGER.info("写入本地文件，workId：{}", workId);

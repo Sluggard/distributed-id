@@ -179,11 +179,9 @@ public class ServerProcessor extends Thread {
             SocketChannel channel = newConnections.poll();
             try {
                 if (channel != null) {
-                    String connectionId = AddressUtil.getConnectionId(channel);
-                    log.info("创建连接：[{}]", connectionId);
                     SelectionKey selectionKey = channel.register(selector, SelectionKey.OP_READ);
-                    DistributedIdChannel distributedIdChannel = buildChannel(connectionId, selectionKey, 1024);
-                    this.channels.put(connectionId, distributedIdChannel);
+                    DistributedIdChannel distributedIdChannel = buildChannel(selectionKey, 1024);
+                    this.channels.put(AddressUtil.getConnectionId(channel), distributedIdChannel);
                 }
             } catch (Exception e) {
                 log.error("创建连接失败", e);
@@ -191,11 +189,11 @@ public class ServerProcessor extends Thread {
         }
     }
 
-    private DistributedIdChannel buildChannel(String id, SelectionKey key, @SuppressWarnings("SameParameterValue") int maxReceiveSize) throws DistributedIdException {
+    private DistributedIdChannel buildChannel(SelectionKey key, @SuppressWarnings("SameParameterValue") int maxReceiveSize) throws DistributedIdException {
         DistributedIdChannel channel;
         try {
             IdGeneratorTransportLayer transportLayer = new IdGeneratorTransportLayer(key);
-            channel = new DistributedIdChannel(id, transportLayer, maxReceiveSize);
+            channel = new DistributedIdChannel(transportLayer, maxReceiveSize);
             key.attach(channel);
         } catch (Exception e) {
             throw new DistributedIdException(e);

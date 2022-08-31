@@ -4,6 +4,7 @@ import com.geega.bsc.id.common.exception.DistributedIdException;
 import com.geega.bsc.id.server.config.ServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -78,8 +79,10 @@ public class ServerAcceptor extends Thread {
                             }
                             ServerProcessor processor = processors[currentProcessor++];
                             try {
-                                ServerSocketChannel serverSocketChannelTemp = (ServerSocketChannel) selectionKey.channel();
-                                SocketChannel socketChannel = serverSocketChannelTemp.accept();
+                                SocketChannel socketChannel;
+                                try (ServerSocketChannel serverSocketChannelTemp = (ServerSocketChannel) selectionKey.channel()) {
+                                    socketChannel = serverSocketChannelTemp.accept();
+                                }
                                 socketChannel.configureBlocking(false);
                                 socketChannel.socket().setTcpNoDelay(true);
                                 socketChannel.socket().setKeepAlive(true);

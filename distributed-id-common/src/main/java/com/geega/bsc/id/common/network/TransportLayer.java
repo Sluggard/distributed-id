@@ -18,6 +18,8 @@ public interface TransportLayer extends ScatteringByteChannel, GatheringByteChan
 
     SocketChannel socketChannel();
 
+    String getConnectionId();
+
     void addInterestOps(int ops);
 
     void removeInterestOps(int ops);

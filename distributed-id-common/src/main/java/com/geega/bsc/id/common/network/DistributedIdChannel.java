@@ -3,6 +3,7 @@ package com.geega.bsc.id.common.network;
 import cn.hutool.core.builder.HashCodeBuilder;
 import com.geega.bsc.id.common.utils.ByteUtil;
 import lombok.extern.slf4j.Slf4j;
+
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.channels.SelectionKey;
@@ -25,8 +26,8 @@ public class DistributedIdChannel {
 
     private Send send;
 
-    public DistributedIdChannel(String id, TransportLayer transportLayer, int maxReceiveSize) {
-        this.id = id;
+    public DistributedIdChannel(TransportLayer transportLayer, int maxReceiveSize) {
+        this.id = transportLayer.getConnectionId();
         this.transportLayer = transportLayer;
         this.maxReceiveSize = maxReceiveSize;
     }
