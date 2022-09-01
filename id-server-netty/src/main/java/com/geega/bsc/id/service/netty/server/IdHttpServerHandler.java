@@ -26,7 +26,6 @@ public class IdHttpServerHandler extends SimpleChannelInboundHandler<FullHttpReq
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) {
-        // /api/v1/test?name=1
         final AbstractRouteHandler routeHandler = routeHandlerMap.get(HttpUtils.getUri(request));
         if (routeHandler == null) {
             //无对应请求逻辑
@@ -38,7 +37,7 @@ public class IdHttpServerHandler extends SimpleChannelInboundHandler<FullHttpReq
     }
 
     private void noneRouteHandlerMsg(ChannelHandlerContext ctx) {
-        HttpUtils.response(ctx, "{\"code\":\"404\",\"msg\":\"该请求无对应处理器\",\"result\":null}");
+        HttpUtils.response(ctx, "{\"code\":\"404\",\"msg\":\"无资源\",\"result\":null}");
     }
 
 }

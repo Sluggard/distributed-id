@@ -37,12 +37,12 @@ public class ZkServer {
     }
 
     private ZkConfig getZkConfig(ServerConfig serverConfig) {
-        ZkConfig zkConfig = new ZkConfig();
-        zkConfig.setNamespace(serverConfig.getZkNamespace());
-        zkConfig.setConnection(serverConfig.getZkConnection());
-        zkConfig.setConnectionTimeoutMs(serverConfig.getZkConnectionTimeoutMs());
-        zkConfig.setSessionTimeoutMs(serverConfig.getZkSessionTimeoutMs());
-        return zkConfig;
+        return ZkConfig.builder()
+                .connection(serverConfig.getZkConnection())
+                .namespace(serverConfig.getZkNamespace())
+                .sessionTimeoutMs(serverConfig.getZkSessionTimeoutMs())
+                .connectionTimeoutMs(serverConfig.getZkConnectionTimeoutMs())
+                .build();
     }
 
     private void init() {

@@ -1,5 +1,6 @@
 package com.geega.bsc.id.client.cache;
 
+import lombok.Builder;
 import lombok.Data;
 
 /**
@@ -7,6 +8,7 @@ import lombok.Data;
  * @date 2022/07/25
  */
 @Data
+@Builder
 public class CacheConfig {
 
     /**

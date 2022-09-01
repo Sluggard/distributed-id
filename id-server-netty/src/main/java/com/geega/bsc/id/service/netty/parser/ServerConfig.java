@@ -35,12 +35,12 @@ public class ServerConfig {
         return PROPERTIES.getProperty("id.zk.connection", "127.0.0.1:2181");
     }
 
-    public Long getIdZkSessionTimeoutMs() {
-        return Long.valueOf(PROPERTIES.getProperty("id.zk.sessionTimeoutMs", "10000"));
+    public Integer getIdZkSessionTimeoutMs() {
+        return Integer.valueOf(PROPERTIES.getProperty("id.zk.sessionTimeoutMs", "10000"));
     }
 
-    public Long getIdZkConnectionTimeoutMs() {
-        return Long.valueOf(PROPERTIES.getProperty("id.zk.connectionTimeoutMs", "10000"));
+    public Integer getIdZkConnectionTimeoutMs() {
+        return Integer.valueOf(PROPERTIES.getProperty("id.zk.connectionTimeoutMs", "10000"));
     }
 
     public Integer getServerPort() {

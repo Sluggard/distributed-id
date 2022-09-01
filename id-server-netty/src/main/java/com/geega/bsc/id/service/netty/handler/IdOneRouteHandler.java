@@ -1,5 +1,8 @@
 package com.geega.bsc.id.service.netty.handler;
 
+import com.alibaba.fastjson.JSON;
+import com.geega.bsc.id.client.IdClient;
+import com.geega.bsc.id.service.netty.response.BizResult;
 import com.geega.bsc.id.service.netty.server.AbstractRouteHandler;
 import com.geega.bsc.id.service.netty.server.HttpRequestParser;
 import io.netty.channel.ChannelHandlerContext;
@@ -12,9 +15,15 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class IdOneRouteHandler extends AbstractRouteHandler {
 
+    private final IdClient idClient;
+
+    public IdOneRouteHandler(IdClient idClient) {
+        this.idClient = idClient;
+    }
+
     @Override
     public String handle(ChannelHandlerContext ctx, HttpRequestParser parser) {
-        return null;
+        return JSON.toJSONString(BizResult.success(idClient.id(100)));
     }
 
 }

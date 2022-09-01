@@ -24,7 +24,7 @@ public class HttpUtils {
      * post，get，put，delete
      */
     public static String getUri(HttpRequest httpRequest) {
-        return new QueryStringDecoder(httpRequest.uri()).uri();
+        return new QueryStringDecoder(httpRequest.uri()).path();
     }
 
     /**
@@ -32,7 +32,6 @@ public class HttpUtils {
      */
     public static void response(ChannelHandlerContext ctx, String response) {
         assert response != null;
-        // 回复信息给浏览器
         ByteBuf byteBuf = Unpooled.copiedBuffer(response, CharsetUtil.UTF_8);
         // 构造一个http响应体，即HttpResponse
         DefaultFullHttpResponse defaultFullHttpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, byteBuf);

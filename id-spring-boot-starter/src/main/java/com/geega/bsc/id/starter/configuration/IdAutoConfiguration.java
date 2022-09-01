@@ -26,15 +26,17 @@ public class IdAutoConfiguration {
 
     @Bean
     public IdClient idClient(ZkProperties idProperties, CacheProperties cacheProperties) {
-        ZkConfig zkConfig = new ZkConfig();
-        zkConfig.setConnection(idProperties.getConnection());
-        zkConfig.setNamespace(idProperties.getNamespace());
-        zkConfig.setConnectionTimeoutMs(idProperties.getConnectionTimeoutMs());
-        zkConfig.setSessionTimeoutMs(idProperties.getSessionTimeoutMs());
+        ZkConfig zkConfig = ZkConfig.builder()
+                .connection(idProperties.getConnection())
+                .namespace(idProperties.getNamespace())
+                .sessionTimeoutMs(idProperties.getSessionTimeoutMs())
+                .connectionTimeoutMs(idProperties.getConnectionTimeoutMs())
+                .build();
 
-        CacheConfig cacheConfig = new CacheConfig();
-        cacheConfig.setCapacity(cacheProperties.getCapacity());
-        cacheConfig.setTrigger(cacheProperties.getTrigger());
+        CacheConfig cacheConfig = CacheConfig.builder()
+                .trigger(cacheProperties.getTrigger())
+                .capacity(cacheProperties.getCapacity())
+                .build();
         return new IdClient(zkConfig, cacheConfig);
     }
 
