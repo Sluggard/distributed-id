@@ -49,10 +49,6 @@ public class DistributedIdChannel {
         this.transportLayer.removeInterestOps(SelectionKey.OP_CONNECT);
     }
 
-    public void removeReadEvent() {
-        this.transportLayer.removeInterestOps(SelectionKey.OP_READ);
-    }
-
     public void interestReadEvent() {
         this.transportLayer.addInterestOps(SelectionKey.OP_READ);
     }

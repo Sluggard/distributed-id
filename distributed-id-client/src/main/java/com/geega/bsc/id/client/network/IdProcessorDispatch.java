@@ -8,7 +8,6 @@ import com.geega.bsc.id.common.utils.AddressUtil;
 import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 处理器分配
@@ -24,8 +23,6 @@ public class IdProcessorDispatch {
     private final IdClient generator;
 
     private volatile IdProcessor currentProcessor;
-
-    private final AtomicInteger id = new AtomicInteger(1);
 
     public IdProcessorDispatch(ZkClient zkClient, IdClient generator) {
         this.zkClient = zkClient;
@@ -52,7 +49,7 @@ public class IdProcessorDispatch {
                     }
                     //筛选出最少连接的服务节点
                     final Optional<ServerNode> first = nodes.stream().sorted().findFirst();
-                    currentProcessor = new IdProcessor(zkClient, String.valueOf(id.getAndIncrement()), generator, first.get());
+                    currentProcessor = new IdProcessor(zkClient, generator, first.get());
                 }
             }
         }

@@ -47,7 +47,7 @@ public class IpUtil {
      * @return List<String>
      */
     private static List<String> getHostAddress(String interfaceName) throws SocketException {
-        List<String> ipList = new ArrayList<String>(5);
+        List<String> ipList = new ArrayList<>(5);
         Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
         while (interfaces.hasMoreElements()) {
             NetworkInterface ni = interfaces.nextElement();

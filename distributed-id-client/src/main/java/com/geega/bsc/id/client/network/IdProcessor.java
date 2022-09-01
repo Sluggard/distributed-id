@@ -8,8 +8,6 @@ import com.geega.bsc.id.common.exception.DistributedIdException;
 import com.geega.bsc.id.common.network.ByteBufferReceive;
 import com.geega.bsc.id.common.network.DistributedIdChannel;
 import com.geega.bsc.id.common.network.IdGeneratorTransportLayer;
-import com.geega.bsc.id.common.network.Send;
-import com.geega.bsc.id.common.utils.AddressUtil;
 import com.geega.bsc.id.common.utils.ByteBufferUtil;
 import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
@@ -18,9 +16,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -35,33 +30,24 @@ public class IdProcessor {
 
     private final ZkClient zkClient;
 
-    private final String id;
-
     private final IdClient generator;
 
     private DistributedIdChannel distributedIdChannel;
 
     private Selector selector;
 
-    private final List<ByteBufferReceive> completedReceives;
-
     /**
      * 0:正在初始化，1：建立好连接 2：断开连接
      */
     private volatile int connectionState = 0;
 
-    private final Deque<ByteBufferReceive> stagedReceives;
-
     private final ExecutorService executorService;
 
     private SocketChannel channel;
 
-    public IdProcessor(ZkClient zkClient, String id, IdClient generator, ServerNode nodeAddress) {
+    public IdProcessor(ZkClient zkClient, IdClient generator, ServerNode nodeAddress) {
         this.zkClient = zkClient;
-        this.id = id;
         this.generator = generator;
-        this.completedReceives = new ArrayList<>();
-        this.stagedReceives = new ArrayDeque<>();
         this.init(nodeAddress.getIp(), nodeAddress.getPort());
         //noinspection AlibabaThreadPoolCreation
         this.executorService = Executors.newSingleThreadExecutor(r -> {
@@ -84,7 +70,7 @@ public class IdProcessor {
 
             //注册到selector，监听事件为连接事件
             SelectionKey selectionKey = channel.register(this.selector, SelectionKey.OP_CONNECT);
-            this.distributedIdChannel = buildChannel(String.valueOf(id), selectionKey, 10 * 1024);
+            this.distributedIdChannel = buildChannel(selectionKey, 10 * 1024);
             //等待连接上
             //noinspection LoopStatementThatDoesntLoop
             while (true) {
@@ -104,7 +90,6 @@ public class IdProcessor {
                                 distributedIdChannel.interestReadEvent();
                                 //注册客户端到zk
                                 zkClient.register(channel);
-                                log.info("创建连接:[{}]", AddressUtil.getConnectionId(channel));
                                 break;
                             } else {
                                 key.cancel();
@@ -137,28 +122,28 @@ public class IdProcessor {
             while (connectionState == 1) {
                 try {
                     //监听操作系统是否有事件，事件来时，操作系统回调函数，让你阻塞状态唤醒
-                    selector.select();
-                    Iterator<SelectionKey> keysIterator = selector.selectedKeys().iterator();
-                    while (keysIterator.hasNext()) {
-                        SelectionKey key = keysIterator.next();
-                        keysIterator.remove();
-                        //读取数据
-                        if (key.isReadable() && !hasStagedReceive()) {
-                            ByteBufferReceive networkReceive;
-                            while ((networkReceive = distributedIdChannel.read()) != null) {
-                                addToStagedReceives(networkReceive);
+                    int select = selector.select();
+                    if (select > 0) {
+                        Iterator<SelectionKey> keysIterator = selector.selectedKeys().iterator();
+                        while (keysIterator.hasNext()) {
+                            SelectionKey key = keysIterator.next();
+                            keysIterator.remove();
+                            //读取数据
+                            if (key.isReadable()) {
+                                ByteBufferReceive receive;
+                                while ((receive = distributedIdChannel.read()) != null) {
+                                    saveId(receive);
+                                }
+                            } else if (key.isWritable()) {
+                                //写数据
+                                distributedIdChannel.write();
                             }
-                        } else if (key.isWritable()) {
-                            //写数据
-                            distributedIdChannel.write();
-                        }
-                        if (!key.isValid()) {
-                            //修改状态
-                            connectionState = 2;
+                            if (!key.isValid()) {
+                                //修改状态
+                                connectionState = 2;
+                            }
                         }
                     }
-                    stagedToCompletedReceives();
-                    handleCompletedReceives();
                 } catch (IOException e) {
                     connectionState = 2;
                 } catch (Exception e) {
@@ -184,65 +169,39 @@ public class IdProcessor {
         } catch (Exception ignored) {
             //do nothing
         } finally {
-            log.warn("关闭连接：{}", distributedIdChannel.socketDescription());
+            log.warn("关闭连接：{}", distributedIdChannel.id());
         }
     }
 
     private void close(DistributedIdChannel channel) {
         try {
             channel.close();
-            this.stagedReceives.clear();
             this.executorService.shutdown();
-            this.completedReceives.clear();
             this.selector.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void addToStagedReceives(ByteBufferReceive receive) {
-        stagedReceives.add(receive);
-    }
-
-    private boolean hasStagedReceive() {
-        return stagedReceives.size() > 0;
-    }
-
     public void poll(int num) {
         //放入请求数据，如果上一次请求还没发送，就不用再次发送
-        distributedIdChannel.setSend(ByteBufferUtil.getSend(id, num));
+        distributedIdChannel.setSend(ByteBufferUtil.getSend(null, num));
         //不管怎样，唤醒selector
         selector.wakeup();
     }
 
-    private void handleCompletedReceives() {
-        if (!this.completedReceives.isEmpty()) {
-            Iterator<ByteBufferReceive> iterator = completedReceives.iterator();
-            while (iterator.hasNext()) {
-                ByteBuffer payload = iterator.next().payload();
-                iterator.remove();
-                String idsJsonString = ByteBufferUtil.byteBufferToString(payload);
-                if (idsJsonString != null && idsJsonString.length() > 0) {
-                    List<Long> ids = JSON.parseArray(idsJsonString, Long.class);
-                    generator.cache(ids);
-                }
-            }
+    private void saveId(ByteBufferReceive byteBufferReceive) {
+        assert byteBufferReceive != null;
+        assert byteBufferReceive.payload() != null;
+        final ByteBuffer payload = byteBufferReceive.payload();
+        String idsJsonString = ByteBufferUtil.byteBufferToString(payload);
+        if (idsJsonString != null && idsJsonString.length() > 0) {
+            List<Long> ids = JSON.parseArray(idsJsonString, Long.class);
+            generator.cache(ids);
         }
     }
 
-    private void stagedToCompletedReceives() {
-        if (!this.stagedReceives.isEmpty()) {
-            Iterator<ByteBufferReceive> iterator = this.stagedReceives.iterator();
-            if (distributedIdChannel.isNotMute()) {
-                while (iterator.hasNext()) {
-                    this.completedReceives.add(iterator.next());
-                    iterator.remove();
-                }
-            }
-        }
-    }
-
-    private DistributedIdChannel buildChannel(String id, SelectionKey key, @SuppressWarnings("SameParameterValue") int maxReceiveSize) throws DistributedIdException {
+    private DistributedIdChannel buildChannel(SelectionKey key, @SuppressWarnings("SameParameterValue") int maxReceiveSize) throws DistributedIdException {
         DistributedIdChannel channel;
         try {
             IdGeneratorTransportLayer transportLayer = new IdGeneratorTransportLayer(key);

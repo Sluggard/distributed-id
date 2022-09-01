@@ -11,23 +11,15 @@ import java.nio.channels.GatheringByteChannel;
  */
 public class ByteBufferSend implements Send {
 
-    private final String destination;
-
     private final ByteBuffer[] buffers;
 
     private int remaining;
 
-    public ByteBufferSend(String destination, ByteBuffer... buffers) {
-        this.destination = destination;
+    public ByteBufferSend(String id, ByteBuffer... buffers) {
         this.buffers = buffers;
         for (ByteBuffer buffer : buffers) {
             remaining += buffer.remaining();
         }
-    }
-
-    @Override
-    public String destination() {
-        return destination;
     }
 
     @Override

@@ -4,7 +4,6 @@ import com.geega.bsc.id.common.exception.DistributedIdException;
 import com.geega.bsc.id.common.network.ByteBufferReceive;
 import com.geega.bsc.id.common.network.DistributedIdChannel;
 import com.geega.bsc.id.common.network.IdGeneratorTransportLayer;
-import com.geega.bsc.id.common.network.Send;
 import com.geega.bsc.id.common.utils.AddressUtil;
 import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
@@ -12,11 +11,9 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -34,11 +31,7 @@ public class ServerProcessor extends Thread {
      */
     private final ConcurrentHashMap<String, DistributedIdChannel> channels;
 
-    private final List<ByteBufferReceive> completedReceives;
-
-    private final Map<DistributedIdChannel, Deque<ByteBufferReceive>> stagedReceives;
-
-    private final List<Send> completedSends;
+    private final Map<DistributedIdChannel, Deque<ByteBufferReceive>> completedReceives;
 
     /**
      * 从ServerAcceptor中来的数据
@@ -62,9 +55,7 @@ public class ServerProcessor extends Thread {
         this.channels = new ConcurrentHashMap<>();
         this.newConnections = new ConcurrentLinkedQueue<>();
         this.waitCloseConnections = new ConcurrentLinkedQueue<>();
-        this.completedReceives = new ArrayList<>();
-        this.stagedReceives = new HashMap<>();
-        this.completedSends = new ArrayList<>();
+        this.completedReceives = new HashMap<>();
         this.init();
     }
 
@@ -86,18 +77,14 @@ public class ServerProcessor extends Thread {
         //noinspection InfiniteLoopStatement
         while (true) {
             try {
-                //从队列中拉取数据出来,完成selector注册
+                //从队列中拉取数据出来,完成selector注册read事件
                 configureNewConnections();
                 //处理数据,将数据发送出去,就是写
                 processNewResponses();
                 //处理事件(读，写)
                 handleEvent();
-                //将一个业务完成read时的数据放入completedReceives中
-                stagedToCompletedReceives();
-                //对于读取到的请求,进行处理,然后处理完后,可能会把结果放入newResponses中,等待被发送出去
+                //将读取完成的数据放入请求handler队列中
                 handleCompletedReceives();
-                //处理发送数据成功的channel
-                handleCompletedSends();
                 //处理待关闭连接
                 handleDisconnected();
             } catch (Exception e) {
@@ -108,38 +95,36 @@ public class ServerProcessor extends Thread {
 
     private void handleEvent() {
         try {
-            selector.select();
-            Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
-            while (iterator.hasNext()) {
-                SelectionKey selectionKey = iterator.next();
-                iterator.remove();
-                DistributedIdChannel distributedIdChannel = (DistributedIdChannel) selectionKey.attachment();
-                try {
-                    if (selectionKey.isConnectable()) {
-                        if (!distributedIdChannel.finishConnect()) {
-                            continue;
+            final int select = selector.select();
+            if (select > 0) {
+                Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+                while (iterator.hasNext()) {
+                    SelectionKey selectionKey = iterator.next();
+                    iterator.remove();
+                    DistributedIdChannel distributedIdChannel = (DistributedIdChannel) selectionKey.attachment();
+                    try {
+                        if (selectionKey.isConnectable()) {
+                            if (!distributedIdChannel.finishConnect()) {
+                                continue;
+                            }
                         }
-                    }
-                    if (selectionKey.isReadable() && !hasStagedReceive(distributedIdChannel)) {
-                        ByteBufferReceive networkReceive;
-                        while ((networkReceive = distributedIdChannel.read()) != null) {
-                            addToStagedReceives(distributedIdChannel, networkReceive);
+                        if (selectionKey.isReadable() && !hasCompletedReceive(distributedIdChannel)) {
+                            ByteBufferReceive networkReceive;
+                            while ((networkReceive = distributedIdChannel.read()) != null) {
+                                addToCompletedReceives(distributedIdChannel, networkReceive);
+                            }
                         }
-                    }
-                    if (selectionKey.isWritable()) {
-                        Send send = distributedIdChannel.write();
-                        if (send != null) {
-                            this.completedSends.add(send);
+                        if (selectionKey.isWritable()) {
+                            distributedIdChannel.write();
                         }
-                    }
-                    if (!selectionKey.isValid()) {
+                        if (!selectionKey.isValid()) {
+                            this.waitCloseConnections.offer(distributedIdChannel);
+                        }
+                    } catch (IOException exception) {
                         this.waitCloseConnections.offer(distributedIdChannel);
+                    } catch (Exception e) {
+                        log.error("未知异常", e);
                     }
-                } catch (IOException exception) {
-                    this.waitCloseConnections.offer(distributedIdChannel);
-                    log.error("IO异常，连接：{}", distributedIdChannel.socketDescription());
-                } catch (Exception e) {
-                    log.error("未知异常", e);
                 }
             }
         } catch (Exception e) {
@@ -201,30 +186,6 @@ public class ServerProcessor extends Thread {
         return channel;
     }
 
-    private void handleCompletedReceives() {
-        if (!completedReceives.isEmpty()) {
-            Iterator<ByteBufferReceive> iterator = completedReceives.iterator();
-            while (iterator.hasNext()) {
-                ByteBufferReceive completedReceive = iterator.next();
-                iterator.remove();
-                DistributedIdChannel distributedIdChannel = channels.get(completedReceive.source());
-                Request request = new Request(selector, completedReceive.payload(), distributedIdChannel.id(), processorId);
-                requestChannel.addRequest(request);
-                //当接收完（读取）数据时，就移除read事件
-                distributedIdChannel.removeReadEvent();
-            }
-        }
-    }
-
-    private void handleCompletedSends() {
-        for (Send send : completedSends) {
-            String destination = send.destination();
-            DistributedIdChannel distributedIdChannel = channels.get(destination);
-            //当处理完写事件后，就再关注read事件
-            distributedIdChannel.interestReadEvent();
-        }
-    }
-
     /**
      * 关闭异常连接
      */
@@ -233,40 +194,44 @@ public class ServerProcessor extends Thread {
             DistributedIdChannel distributedIdChannel = waitCloseConnections.poll();
             try {
                 if (distributedIdChannel != null) {
-                    log.warn("关闭异常连接:{}", distributedIdChannel.socketDescription());
+                    log.warn("关闭异常连接:{}", distributedIdChannel.id());
                     distributedIdChannel.close();
                 }
             } catch (Exception e) {
-                log.error("关闭连接异常", e);
+                log.error("关闭异常连接异常", e);
             }
         }
     }
 
-    private void addToStagedReceives(DistributedIdChannel channel, ByteBufferReceive receive) {
-        if (!stagedReceives.containsKey(channel)) {
-            stagedReceives.put(channel, new ArrayDeque<>());
+    private void addToCompletedReceives(DistributedIdChannel channel, ByteBufferReceive receive) {
+        if (!completedReceives.containsKey(channel)) {
+            completedReceives.put(channel, new ArrayDeque<>());
         }
-        Deque<ByteBufferReceive> deque = stagedReceives.get(channel);
+        Deque<ByteBufferReceive> deque = completedReceives.get(channel);
         deque.add(receive);
     }
 
-    private boolean hasStagedReceive(DistributedIdChannel channel) {
-        return stagedReceives.containsKey(channel);
+    private boolean hasCompletedReceive(DistributedIdChannel channel) {
+        return completedReceives.containsKey(channel);
     }
 
-    private void stagedToCompletedReceives() {
-        if (!this.stagedReceives.isEmpty()) {
-            Iterator<Map.Entry<DistributedIdChannel, Deque<ByteBufferReceive>>> iter = this.stagedReceives.entrySet().iterator();
-            while (iter.hasNext()) {
-                Map.Entry<DistributedIdChannel, Deque<ByteBufferReceive>> entry = iter.next();
+    private void handleCompletedReceives() {
+        if (!this.completedReceives.isEmpty()) {
+            Iterator<Map.Entry<DistributedIdChannel, Deque<ByteBufferReceive>>> iterator = this.completedReceives.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<DistributedIdChannel, Deque<ByteBufferReceive>> entry = iterator.next();
                 DistributedIdChannel channel = entry.getKey();
                 //selectionKey是否处于活跃状态，处于活跃状态才处理
                 if (channel.isNotMute()) {
                     Deque<ByteBufferReceive> deque = entry.getValue();
-                    ByteBufferReceive networkReceive = deque.poll();
-                    this.completedReceives.add(networkReceive);
+                    ByteBufferReceive networkReceive;
+                    while ((networkReceive = deque.poll()) != null) {
+                        DistributedIdChannel distributedIdChannel = channels.get(networkReceive.source());
+                        Request request = new Request(selector, networkReceive.payload(), distributedIdChannel.id(), processorId);
+                        requestChannel.addRequest(request);
+                    }
                     if (deque.isEmpty()) {
-                        iter.remove();
+                        iterator.remove();
                     }
                 }
             }

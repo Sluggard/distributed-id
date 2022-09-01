@@ -44,16 +44,6 @@ public class IdGeneratorTransportLayer implements TransportLayer {
         boolean connected = this.socketChannel.finishConnect();
         if (connected) {
             //建立连接后，关注read事件，移除accept、write事件
-            //00000000
-            // &
-            //10001001
-            // |
-            //00000001
-            //
-            //00000001 1 read
-            //00000100 4 write
-            //00001000 8 connect
-            //00010000 16 accept
             this.key.interestOps(this.key.interestOps() & -9 | SelectionKey.OP_READ);
         }
         return connected;

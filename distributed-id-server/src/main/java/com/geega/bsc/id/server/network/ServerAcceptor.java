@@ -2,10 +2,9 @@ package com.geega.bsc.id.server.network;
 
 import com.geega.bsc.id.common.exception.DistributedIdException;
 import com.geega.bsc.id.server.config.ServerConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import lombok.extern.slf4j.Slf4j;
 import java.net.InetSocketAddress;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -15,9 +14,8 @@ import java.util.Iterator;
 /**
  * @author Jun.An3
  */
+@Slf4j
 public class ServerAcceptor extends Thread {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ServerAcceptor.class);
 
     private Selector selector;
 
@@ -42,9 +40,9 @@ public class ServerAcceptor extends Thread {
             //初始化网络Acceptor
             this.selector = Selector.open();
             this.serverSocketChannel = ServerSocketChannel.open();
-            this.serverSocketChannel.bind(new InetSocketAddress(this.serverConfig.getIp(), this.serverConfig.getPort()));
             this.serverSocketChannel.configureBlocking(false);
             this.serverSocketChannel.socket().setReceiveBufferSize(4096);
+            this.serverSocketChannel.bind(new InetSocketAddress(this.serverConfig.getIp(), this.serverConfig.getPort()));
         } catch (Exception e) {
             throw new DistributedIdException("初始化网络错误", e);
         }
@@ -63,10 +61,14 @@ public class ServerAcceptor extends Thread {
     @Override
     public void run() {
         int currentProcessor = 0;
+        try {
+            this.serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+        } catch (ClosedChannelException e) {
+            e.printStackTrace();
+        }
         //noinspection InfiniteLoopStatement
         while (true) {
             try {
-                this.serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
                 int select = selector.select();
                 if (select > 0) {
                     Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
@@ -80,9 +82,9 @@ public class ServerAcceptor extends Thread {
                             ServerProcessor processor = processors[currentProcessor++];
                             try {
                                 SocketChannel socketChannel;
-                                try (ServerSocketChannel serverSocketChannelTemp = (ServerSocketChannel) selectionKey.channel()) {
-                                    socketChannel = serverSocketChannelTemp.accept();
-                                }
+                                ServerSocketChannel serverSocketChannelTemp = (ServerSocketChannel) selectionKey.channel();
+                                socketChannel = serverSocketChannelTemp.accept();
+
                                 socketChannel.configureBlocking(false);
                                 socketChannel.socket().setTcpNoDelay(true);
                                 socketChannel.socket().setKeepAlive(true);
@@ -90,13 +92,13 @@ public class ServerAcceptor extends Thread {
                                 socketChannel.socket().setSendBufferSize(2 * 1024);
                                 processor.addChannel(socketChannel);
                             } catch (Exception e) {
-                                LOGGER.error("无法创建连接", e);
+                                log.error("无法创建连接", e);
                             }
                         }
                     }
                 }
             } catch (Exception e) {
-                LOGGER.error("网络异常", e);
+                log.error("网络异常", e);
             }
         }
     }
