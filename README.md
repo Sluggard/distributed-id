@@ -1,33 +1,33 @@
 ##### 模块介绍
 
-- distributed-id-common
+- id-common
 
 ```
 公共包
 ```
 
-- distributed-id-client
+- id-client
 
 ```
-客户端，包含distributed-id-common模块
-```
-
-- distributed-id-server
-
-```
-服务端，包含distributed-id-common模块
-```
-
-- id-spring-boot-starter
-
-```
-Spring-boot-starter模块，包含distributed-id-client、distributed-id-common模块
+客户端，包含id-common模块
 ```
 
 - id-server
 
 ```
-基于spring-boot-starter模块，提供HTTP方式获取ID的应用，包含distributed-id-common、distributed-id-client、id-spring-boot-starter模块
+服务端，包含id-common模块
+```
+
+- id-spring-boot-starter
+
+```
+Spring-boot-starter模块，包含id-client、id-common模块
+```
+
+- id-server
+
+```
+基于spring-boot-starter模块，提供HTTP方式获取ID的应用，包含id-common、id-client、id-spring-boot-starter模块
 ```
 
 ##### 如何集成

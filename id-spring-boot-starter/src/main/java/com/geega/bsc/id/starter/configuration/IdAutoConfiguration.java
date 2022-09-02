@@ -1,8 +1,3 @@
-/*
- * Copyright (c) 2019, ABB and/or its affiliates. All rights reserved.
- * ABB PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
- */
-
 package com.geega.bsc.id.starter.configuration;
 
 import com.geega.bsc.id.client.IdClient;

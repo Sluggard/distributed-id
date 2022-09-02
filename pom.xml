@@ -9,13 +9,13 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>distributed-id-client</module>
-        <module>distributed-id-server</module>
-        <module>distributed-id-common</module>
-        <module>id-spring-boot-starter</module>
+        <module>id-client</module>
         <module>id-server</module>
-        <module>test</module>
-        <module>id-server-netty</module>
+        <module>id-common</module>
+        <module>id-spring-boot-starter</module>
+        <module>id-service</module>
+        <module>id-test</module>
+        <module>id-service-netty</module>
     </modules>
 
     <properties>
