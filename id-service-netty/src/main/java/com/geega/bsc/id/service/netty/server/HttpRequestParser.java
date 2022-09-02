@@ -27,10 +27,18 @@ public class HttpRequestParser {
     }
 
     /**
-     * 获取uri
+     * 获取path
      * 例子：/api/v1/test
      */
     public String uri() {
+        return httpRequest.uri();
+    }
+
+    /**
+     * 获取uri
+     * 例子：/api/v1/test?name=test
+     */
+    public String path() {
         return new QueryStringDecoder(httpRequest.uri()).uri();
     }
 

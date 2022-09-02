@@ -1,5 +1,6 @@
 package com.geega.bsc.id.service.netty.server;
 
+import com.alibaba.fastjson.JSON;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -14,10 +15,11 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class AbstractRouteHandler implements RouteHandler {
 
     void process(ChannelHandlerContext ctx, FullHttpRequest httpRequest) {
+        HttpRequestParser httpRequestParser = new HttpRequestParser(httpRequest);
         //打印日志
-        log(httpRequest);
+        log(httpRequestParser);
         //处理请求逻辑
-        String response = handle(ctx, new HttpRequestParser(httpRequest));
+        String response = handle(ctx, httpRequestParser);
         //请求响应
         response(ctx, response);
     }
@@ -26,8 +28,8 @@ public abstract class AbstractRouteHandler implements RouteHandler {
         HttpUtils.response(ctx, response);
     }
 
-    private void log(FullHttpRequest httpRequest) {
-        log.info("请求uri：{}，请求method：{}，请求body：{}", httpRequest.uri(), httpRequest.method().name(), httpRequest.decoderResult());
+    private void log(HttpRequestParser httpRequestParser) {
+        log.info("uri：{}，method：{}，body：{}", httpRequestParser.path(), httpRequestParser.method().name(), JSON.toJSONString(httpRequestParser.bodyParams()));
     }
 
 }

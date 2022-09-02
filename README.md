@@ -121,8 +121,7 @@ id.zk.connectionTimeoutMs=10000
 - 断开连接
 - 网络异常
 - 重连
-- 代码凌乱
 
 ##### 待办事项
 
-- 基于Netty实现客户端、服务端、HTTP服务方式
+- 基于Netty实现客户端、服务端
