@@ -23,21 +23,11 @@ public class IdStarter {
 
         //获取配置文件
         ServerConfig serverConfig = new ServerConfig();
-        CacheConfig cacheConfig = CacheConfig.builder()
-                .capacity(serverConfig.getIdCacheCapacity())
-                .trigger(serverConfig.getIdCacheTrigger())
-                .build();
 
-        ZkConfig zkConfig = ZkConfig.builder()
-                .connection(serverConfig.getIdZkConnection())
-                .namespace(serverConfig.getIdZkNameSpace())
-                .sessionTimeoutMs(serverConfig.getIdZkSessionTimeoutMs())
-                .connectionTimeoutMs(serverConfig.getIdZkConnectionTimeoutMs())
-                .build();
+        //创建id生成器
+        IdClient idClient = new IdClient(getZkConfig(serverConfig), getCacheConfig(serverConfig));
 
-        IdClient idClient = new IdClient(zkConfig, cacheConfig);
-
-        //配置路由<->请求处理器
+        //配置请求处理器
         Map<String, AbstractRouteHandler> routeHandlerMap = new HashMap<>(2);
         routeHandlerMap.put("/api/v1/id/one", new IdOneRouteHandler(idClient));
         routeHandlerMap.put("/api/v1/id/list", new IdListRouteHandler(idClient));
@@ -46,6 +36,23 @@ public class IdStarter {
         IdHttpServer idHttpServer = new IdHttpServer(serverConfig.getServerPort(), routeHandlerMap);
         idHttpServer.start();
 
+    }
+
+    private static ZkConfig getZkConfig(ServerConfig serverConfig) {
+        return ZkConfig.builder()
+                .connection(serverConfig.getIdZkConnection())
+                .namespace(serverConfig.getIdZkNameSpace())
+                .sessionTimeoutMs(serverConfig.getIdZkSessionTimeoutMs())
+                .connectionTimeoutMs(serverConfig.getIdZkConnectionTimeoutMs())
+                .build();
+
+    }
+
+    private static CacheConfig getCacheConfig(ServerConfig serverConfig) {
+        return CacheConfig.builder()
+                .capacity(serverConfig.getIdCacheCapacity())
+                .trigger(serverConfig.getIdCacheTrigger())
+                .build();
     }
 
 }

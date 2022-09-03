@@ -1,6 +1,6 @@
 package com.geega.bsc.id.server.netty.initializer;
 
-import com.sun.xml.internal.ws.api.message.Packet;
+import com.geega.bsc.id.server.netty.packet.Packet;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
@@ -15,6 +15,7 @@ public class PacketEncoder extends MessageToByteEncoder<Packet> {
 
     @Override
     protected void encode(ChannelHandlerContext ctx, Packet msg, ByteBuf out) {
+        msg.write(out);
     }
 
 }

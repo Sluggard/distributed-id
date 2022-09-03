@@ -17,6 +17,7 @@
         <module>id-service</module>
         <module>id-service-netty</module>
         <module>id-test</module>
+        <module>id-client-netty</module>
     </modules>
 
     <properties>

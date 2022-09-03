@@ -23,6 +23,13 @@ public class Main {
         //00000001
         //00000000
         //00000000
+        print("1","2","3");
+    }
+
+    public static void print(String... args){
+        for (String arg : args) {
+            System.out.println(arg);
+        }
     }
 
 }

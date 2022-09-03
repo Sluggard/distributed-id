@@ -50,7 +50,7 @@ public class IdHttpServer {
             sync.channel().closeFuture().sync();
 
         } catch (Exception e) {
-            throw new RuntimeException("低代码插件启动异常", e);
+            throw new RuntimeException("服务启动异常", e);
         } finally {
             try {
                 if (workerGroup != null) {
