@@ -124,4 +124,4 @@ id.zk.connectionTimeoutMs=10000
 
 ##### 待办事项
 
-- 基于Netty实现客户端、服务端
+- 基于Netty实现客户端

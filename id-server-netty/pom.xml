@@ -22,12 +22,6 @@
             <artifactId>netty-all</artifactId>
             <version>4.1.80.Final</version>
         </dependency>
-        <!--protobuf序列化组件-->
-        <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <version>3.18.1</version>
-        </dependency>
         <dependency>
             <groupId>com.geega.cloud</groupId>
             <artifactId>id-common</artifactId>
