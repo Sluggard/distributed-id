@@ -31,6 +31,7 @@ public class IdChannelHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+        ctx.close();
         log.warn("连接已断开：{}", ctx.channel().remoteAddress());
     }
 
