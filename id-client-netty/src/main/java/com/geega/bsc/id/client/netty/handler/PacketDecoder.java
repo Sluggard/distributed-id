@@ -25,7 +25,7 @@ public class PacketDecoder extends LengthFieldBasedFrameDecoder {
         ByteBuf byteBuf = (ByteBuf) super.decode(ctx, buffer);
         if (byteBuf != null) {
             try {
-                return Packet.parse(byteBuf);
+                return Packet.read(byteBuf);
             } finally {
                 ReferenceCountUtil.release(byteBuf);
             }

@@ -16,7 +16,7 @@ public class Packet {
 
     private byte[] body;
 
-    public static Packet parse(ByteBuf byteBuf) {
+    public static Packet read(ByteBuf byteBuf) {
         byte[] bodyBytes = new byte[4];
         byteBuf.readBytes(bodyBytes);
         //再次读取num数据
@@ -24,6 +24,7 @@ public class Packet {
     }
 
     public void write(ByteBuf out) {
+        assert body != null && body.length > 0;
         out.writeBytes(body);
     }
 
