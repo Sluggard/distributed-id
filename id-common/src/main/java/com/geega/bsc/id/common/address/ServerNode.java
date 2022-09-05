@@ -61,4 +61,12 @@ public class ServerNode implements Serializable, Comparable<ServerNode> {
         return flag ? 1 : -1;
     }
 
+    @Override
+    public String toString() {
+        return "ServerNode{" +
+                "ip='" + ip + '\'' +
+                ", port=" + port +
+                '}';
+    }
+
 }

@@ -4,6 +4,7 @@ import com.geega.bsc.id.common.utils.SnowFlake;
 import com.geega.bsc.id.server.netty.initializer.IdChannelInitializer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
@@ -44,6 +45,7 @@ public class IdTcpServer {
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
+                    .option(ChannelOption.TCP_NODELAY, true)
                     .handler(new LoggingHandler(LogLevel.DEBUG))
                     .childHandler(new IdChannelInitializer(snowFlake));
 

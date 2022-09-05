@@ -54,6 +54,7 @@ public class IdClient {
 
     private void preloadCache() {
         executeOnceSync(capacity);
+        SleepUtil.waitMs(3000);
     }
 
     public Long id(long waitMs) {

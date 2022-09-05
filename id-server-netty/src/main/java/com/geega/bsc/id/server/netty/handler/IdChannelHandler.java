@@ -6,11 +6,14 @@
 package com.geega.bsc.id.server.netty.handler;
 
 import com.alibaba.fastjson.JSON;
+import com.geega.bsc.id.common.utils.AddressUtil;
 import com.geega.bsc.id.common.utils.SnowFlake;
 import com.geega.bsc.id.server.netty.packet.Packet;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.socket.SocketChannel;
 import lombok.extern.slf4j.Slf4j;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,10 +26,19 @@ import java.util.List;
 @Slf4j
 public class IdChannelHandler extends ChannelInboundHandlerAdapter {
 
+    private SocketChannel socketChannel;
+
     private final SnowFlake snowFlake;
 
     public IdChannelHandler(SnowFlake snowFlake) {
         this.snowFlake = snowFlake;
+    }
+
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) {
+        this.socketChannel = (SocketChannel) ctx.channel();
+        ctx.fireChannelActive();
+        log.warn("连接建立：{}", getConnectionId());
     }
 
     @Override
@@ -46,6 +58,12 @@ public class IdChannelHandler extends ChannelInboundHandlerAdapter {
         String ids = JSON.toJSONString(result);
         log.info("生成ID：{}", ids);
         ctx.writeAndFlush(Packet.builder().body(ids.getBytes()).build());
+    }
+
+    public String getConnectionId() {
+        InetSocketAddress localAddress = socketChannel.localAddress();
+        InetSocketAddress remoteAddress = socketChannel.remoteAddress();
+        return AddressUtil.getConnectionId(localAddress, remoteAddress);
     }
 
 }

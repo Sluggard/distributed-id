@@ -8,7 +8,6 @@ package com.geega.bsc.id.client.netty.test;
 import com.geega.bsc.id.client.netty.client.IdClient;
 import com.geega.bsc.id.client.netty.config.CacheConfig;
 import com.geega.bsc.id.common.config.ZkConfig;
-import com.geega.bsc.id.common.utils.SleepUtil;
 
 /**
  * Test
@@ -22,8 +21,7 @@ public class Test {
 
         IdClient idClient = new IdClient(getZkConfig(), getCacheConfig());
         for (int i = 0; i < 5; i++) {
-            System.out.println(idClient.id());
-            SleepUtil.waitMs(10);
+            System.out.println("id：" + idClient.id());
         }
     }
 

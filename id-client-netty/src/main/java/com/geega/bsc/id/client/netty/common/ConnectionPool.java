@@ -44,6 +44,7 @@ public class ConnectionPool {
                     closeNetClient();
                     //获取新连接
                     try {
+                        log.info("创建连接开始：{}", serverNode);
                         currentNetClient = new NetClient(serverNode, zkClient, idClient);
                     } catch (Exception e) {
                         throw new DistributedIdException("创建连接失败", e);

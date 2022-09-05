@@ -2,6 +2,7 @@ package com.geega.bsc.id.service.netty.server;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
@@ -44,6 +45,7 @@ public class IdHttpServer {
             bootstrap.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .handler(new LoggingHandler(LogLevel.DEBUG))
+                    .option(ChannelOption.TCP_NODELAY, true)
                     .childHandler(new IdChannelInitializer(routeHandlerMap));
 
             final ChannelFuture sync = bootstrap.bind(this.port).sync();
