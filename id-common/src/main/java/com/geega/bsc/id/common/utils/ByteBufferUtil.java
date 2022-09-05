@@ -48,7 +48,7 @@ public class ByteBufferUtil {
         return new ByteBufferSend(destination, getBufferForServer(ids));
     }
 
-    private static byte[] intToByte(int n) {
+    public static byte[] intToByte(int n) {
         byte[] b = new byte[NEED_NUM_LENGTH];
         b[3] = (byte) (n & 0xff);
         b[2] = (byte) (n >> 8 & 0xff);

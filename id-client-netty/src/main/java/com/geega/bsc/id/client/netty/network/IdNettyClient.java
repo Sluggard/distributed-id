@@ -1,5 +1,6 @@
 package com.geega.bsc.id.client.netty.network;
 
+import com.geega.bsc.id.client.netty.client.IdClient;
 import com.geega.bsc.id.client.netty.handler.IdClientChannelInitializer;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
@@ -12,17 +13,19 @@ import io.netty.channel.socket.nio.NioSocketChannel;
  */
 public class IdNettyClient {
 
-    public IdNettyClient() {
+    private final IdClient idClient;
 
+    public IdNettyClient(IdClient idClient) {
+        this.idClient = idClient;
     }
 
     public void start(String ip, int port) throws InterruptedException {
         NioEventLoopGroup workerGroup = new NioEventLoopGroup();
 
         Bootstrap bootstrap = new Bootstrap();
-        bootstrap.group(workerGroup).channel(NioSocketChannel.class).handler(new IdClientChannelInitializer());
+        bootstrap.group(workerGroup).channel(NioSocketChannel.class).handler(new IdClientChannelInitializer(idClient, null));
 
-        final ChannelFuture sync = bootstrap.connect(ip, port).sync();
+        ChannelFuture sync = bootstrap.connect(ip, port).sync();
         sync.channel().closeFuture().sync();
 
     }

@@ -21,18 +21,18 @@ public class IdProcessorDispatch {
 
     private final ZkClient zkClient;
 
-    private final IdClient generator;
+    private final IdClient idClient;
 
     private volatile IdProcessor currentProcessor;
 
-    public IdProcessorDispatch(ZkClient zkClient, IdClient generator) {
+    public IdProcessorDispatch(ZkClient zkClient, IdClient idClient) {
         this.zkClient = zkClient;
-        this.generator = generator;
+        this.idClient = idClient;
     }
 
     public IdProcessor dispatch() {
         if (currentProcessor != null && currentProcessor.isValid()) {
-            log.info("使用连接：[{}]", AddressUtil.getConnectionId(currentProcessor.getSocketChannel()));
+            log.info("使用连接：[{}]", currentProcessor.getConnectionId());
             return currentProcessor;
         }
         checkClose();
@@ -50,7 +50,7 @@ public class IdProcessorDispatch {
                     }
                     //筛选出最少连接的服务节点
                     final Optional<ServerNode> first = nodes.stream().sorted().findFirst();
-                    currentProcessor = new IdProcessor(zkClient, generator, first.get());
+                    currentProcessor = new IdProcessor(zkClient, idClient, first.get());
                 }
             }
         }

@@ -1,8 +1,10 @@
 package com.geega.bsc.id.client.netty.packet;
 
+import com.alibaba.fastjson.JSON;
 import io.netty.buffer.ByteBuf;
 import lombok.Builder;
 import lombok.Data;
+import java.util.List;
 
 /**
  * body长度(4byte) + body数据(不定长度)
@@ -17,10 +19,15 @@ public class Packet {
     private byte[] body;
 
     public static Packet read(ByteBuf byteBuf) {
-        byte[] bodyBytes = new byte[4];
+        final int length = byteBuf.readInt();
+        byte[] bodyBytes = new byte[length];
         byteBuf.readBytes(bodyBytes);
-        //再次读取num数据
         return Packet.builder().body(bodyBytes).build();
+    }
+
+    public List<Long> getIds() {
+        assert body != null;
+        return JSON.parseArray(new String(body), Long.class);
     }
 
     public void write(ByteBuf out) {

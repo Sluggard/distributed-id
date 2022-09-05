@@ -17,7 +17,8 @@ public class Packet {
     private byte[] body;
 
     public static Packet parse(ByteBuf byteBuf) {
-        byte[] bodyBytes = new byte[4];
+        final int length = byteBuf.readInt();
+        byte[] bodyBytes = new byte[length];
         byteBuf.readBytes(bodyBytes);
         //再次读取num数据
         return Packet.builder().body(bodyBytes).build();

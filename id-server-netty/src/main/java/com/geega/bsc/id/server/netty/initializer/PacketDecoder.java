@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PacketDecoder extends LengthFieldBasedFrameDecoder {
 
     public PacketDecoder(int maxFrameLength,int length) {
-        super(maxFrameLength, 0, length, 0, length);
+        super(maxFrameLength, 0, length, 0, 0);
     }
 
     @Override
