@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.zookeeper.CreateMode;
-
 import java.nio.channels.SocketChannel;
 import java.util.List;
 
@@ -36,9 +35,23 @@ public class ZkClient {
         return this.nodesInformation.getNodes();
     }
 
+    public void register(String connectionId) {
+        try {
+            client.create()
+                    .creatingParentsIfNeeded()
+                    .withMode(CreateMode.EPHEMERAL)
+                    .forPath(ZkTreeConstant.CLIENT_ROOT + ZkTreeConstant.PATH_SEPARATOR + connectionId);
+        } catch (Exception e) {
+            throw new DistributedIdException("客户端向ZK注册失败", e);
+        }
+    }
+
     public void register(SocketChannel channel) {
         try {
-            client.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(ZkTreeConstant.CLIENT_ROOT + ZkTreeConstant.PATH_SEPARATOR + AddressUtil.getConnectionId(channel));
+            client.create()
+                    .creatingParentsIfNeeded()
+                    .withMode(CreateMode.EPHEMERAL)
+                    .forPath(ZkTreeConstant.CLIENT_ROOT + ZkTreeConstant.PATH_SEPARATOR + AddressUtil.getConnectionId(channel));
         } catch (Exception e) {
             throw new DistributedIdException("客户端向ZK注册失败", e);
         }

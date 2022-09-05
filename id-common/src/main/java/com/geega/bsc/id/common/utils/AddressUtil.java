@@ -1,5 +1,6 @@
 package com.geega.bsc.id.common.utils;
 
+import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 
 /**
@@ -25,6 +26,14 @@ public class AddressUtil {
 
     private static String getConnectionId(String localHost, int localPort, String remoteHost, int remotePort) {
         return localHost + ":" + localPort + "-" + remoteHost + ":" + remotePort;
+    }
+
+    public static String getConnectionId(InetSocketAddress localAddress, InetSocketAddress remoteAddress) {
+        String localHost = localAddress.getAddress().getHostAddress();
+        int localPort = localAddress.getPort();
+        String remoteHost = remoteAddress.getAddress().getHostAddress();
+        int remotePort =remoteAddress.getPort();
+        return getConnectionId(localHost, localPort, remoteHost, remotePort);
     }
 
 }

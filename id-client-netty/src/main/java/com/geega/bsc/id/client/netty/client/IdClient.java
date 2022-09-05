@@ -1,12 +1,11 @@
 package com.geega.bsc.id.client.netty.client;
 
+import com.geega.bsc.id.client.netty.common.ConnectionPool;
 import com.geega.bsc.id.client.netty.config.CacheConfig;
-import com.geega.bsc.id.client.netty.network.IdProcessorDispatch;
 import com.geega.bsc.id.client.netty.zk.ZkClient;
 import com.geega.bsc.id.common.config.ZkConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.geega.bsc.id.common.utils.SleepUtil;
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,13 +19,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Jun.An3
  * @date 2022/07/18
  */
+@Slf4j
 public class IdClient {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(IdClient.class);
-
-    /**
-     * 容量：1000
-     */
     private final int capacity;
 
     private final int trigger;
@@ -38,7 +33,7 @@ public class IdClient {
 
     private final ExecutorService executorService;
 
-    private final IdProcessorDispatch processorDispatch;
+    private final ConnectionPool connectionPool;
 
     private final AtomicBoolean isExpanding = new AtomicBoolean(false);
 
@@ -46,7 +41,7 @@ public class IdClient {
         this.capacity = cacheConfig.getCapacity();
         this.trigger = cacheConfig.getTrigger();
         this.idQueue = new LinkedBlockingQueue<>(this.capacity);
-        this.processorDispatch = new IdProcessorDispatch(new ZkClient(zkConfig), this);
+        this.connectionPool = new ConnectionPool(new ZkClient(zkConfig), this);
         //noinspection AlibabaThreadPoolCreation
         this.executorService = Executors.newSingleThreadExecutor(r -> {
             Thread thread = new Thread(r, "Get-Id-Schedule");
@@ -92,7 +87,7 @@ public class IdClient {
             }
         } catch (Exception e) {
             //do nothing
-            LOGGER.error("触发拉取ID异常", e);
+            log.error("触发拉取ID异常", e);
         }
     }
 
@@ -102,10 +97,10 @@ public class IdClient {
 
     private void executeOnceSync(int num) {
         try {
-            this.processorDispatch.dispatch().poll(num);
+            this.connectionPool.one().poll(num);
         } catch (Exception e) {
             //do nothing
-            LOGGER.error("拉取ID异常", e);
+            log.error("拉取ID异常", e);
         }
     }
 

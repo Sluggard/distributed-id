@@ -13,7 +13,7 @@
     <dependencies>
         <dependency>
             <groupId>com.geega.cloud</groupId>
-            <artifactId>id-client-netty-test</artifactId>
+            <artifactId>id-client-netty</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
     </dependencies>

@@ -1,8 +1,10 @@
 package com.geega.bsc.id.client.netty.common;
 
+import com.geega.bsc.id.client.netty.client.IdClient;
 import com.geega.bsc.id.client.netty.zk.ZkClient;
 import com.geega.bsc.id.common.address.ServerNode;
 import com.geega.bsc.id.common.exception.DistributedIdException;
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,14 +14,18 @@ import java.util.Optional;
  * @author Jun.An3
  * @date 2022/09/05
  */
+@Slf4j
 public class ConnectionPool {
 
     private final ZkClient zkClient;
 
     private volatile NetClient currentNetClient;
 
-    public ConnectionPool(ZkClient zkClient) {
+    private final IdClient idClient;
+
+    public ConnectionPool(ZkClient zkClient, IdClient idClient) {
         this.zkClient = zkClient;
+        this.idClient = idClient;
     }
 
     public NetClient one() {
@@ -34,11 +40,24 @@ public class ConnectionPool {
                     //筛选出最少连接的服务节点
                     Optional<ServerNode> suitServerNode = nodes.stream().sorted().findFirst();
                     ServerNode serverNode = suitServerNode.get();
-                    currentNetClient = new NetClient(serverNode.getIp(), serverNode.getPort());
+                    //关闭无效的连接
+                    closeNetClient();
+                    //获取新连接
+                    try {
+                        currentNetClient = new NetClient(serverNode, zkClient, idClient);
+                    } catch (Exception e) {
+                        throw new DistributedIdException("创建连接失败", e);
+                    }
                 }
             }
         }
         return currentNetClient;
+    }
+
+    private void closeNetClient() {
+        if (currentNetClient != null && currentNetClient.isClosed()) {
+            currentNetClient.close();
+        }
     }
 
 }
