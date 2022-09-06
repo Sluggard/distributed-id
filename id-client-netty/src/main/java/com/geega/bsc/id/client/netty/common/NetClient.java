@@ -20,6 +20,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldPrepender;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -49,7 +51,11 @@ public class NetClient {
             bootstrap.group(bootGroup)
                     .channel(NioSocketChannel.class)
                     .option(ChannelOption.SO_BACKLOG, 10)
+                    .option(ChannelOption.SO_SNDBUF, 1024)
+                    .option(ChannelOption.SO_RCVBUF, 1024 * 1024)
+                    .option(ChannelOption.SO_BACKLOG, 10)
                     .option(ChannelOption.TCP_NODELAY, true)
+                    .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
                     .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel socketChannel) {
@@ -67,7 +73,7 @@ public class NetClient {
             ChannelFuture sync = bootstrap.connect(serverNode.getIp(), serverNode.getPort()).sync();
             sync.channel().closeFuture().addListener((ChannelFutureListener) future -> bootGroup.shutdownGracefully());
         } catch (Exception e) {
-            throw new DistributedIdException("服务端启动异常", e);
+            throw new DistributedIdException("客户端启动异常", e);
         }
     }
 

@@ -1,11 +1,14 @@
 package com.geega.bsc.id.common.utils;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * twitter的snowflake算法 -- java实现
  * 协议格式： 0 - 41位时间戳 - 2位数据中心标识 - 8位机器标识 - 12位序列号
  *
  * @author Yd
  */
+@Slf4j
 public class SnowFlake {
 
     /**
@@ -129,14 +132,6 @@ public class SnowFlake {
 
     private long getNewStamp() {
         return System.currentTimeMillis();
-    }
-
-    public static void main(String[] args) {
-        SnowFlake snowFlake = new SnowFlake(2, 3);
-        long start = System.currentTimeMillis();
-        System.out.println(snowFlake.nextId());
-        long end = System.currentTimeMillis();
-        System.out.println(end - start);
     }
 
 }

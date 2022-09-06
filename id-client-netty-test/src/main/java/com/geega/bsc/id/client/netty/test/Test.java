@@ -8,6 +8,7 @@ package com.geega.bsc.id.client.netty.test;
 import com.geega.bsc.id.client.netty.client.IdClient;
 import com.geega.bsc.id.client.netty.config.CacheConfig;
 import com.geega.bsc.id.common.config.ZkConfig;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Test
@@ -15,13 +16,14 @@ import com.geega.bsc.id.common.config.ZkConfig;
  * @author Jun.An3
  * @date 2022/09/05
  */
+@Slf4j
 public class Test {
 
     public static void main(String[] args) {
 
         IdClient idClient = new IdClient(getZkConfig(), getCacheConfig());
         for (int i = 0; i < 5; i++) {
-            System.out.println("id：" + idClient.id());
+            log.info("id：" + idClient.id());
         }
     }
 

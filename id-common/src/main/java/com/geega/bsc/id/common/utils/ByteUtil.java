@@ -1,6 +1,7 @@
 package com.geega.bsc.id.common.utils;
 
 import com.geega.bsc.id.common.exception.DistributedIdException;
+import lombok.extern.slf4j.Slf4j;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
@@ -13,6 +14,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Slf4j
 public class ByteUtil {
 
     // This matches URIs of formats: host:port and protocol:\\host:port
@@ -651,7 +653,7 @@ public class ByteUtil {
         } catch (IOException outer) {
             try {
                 Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
-                System.out.println("Non-atomic move of " + source + " to " + target + " succeeded after atomic move failed due to "
+                log.info("Non-atomic move of " + source + " to " + target + " succeeded after atomic move failed due to "
                         + outer.getMessage());
             } catch (IOException inner) {
                 inner.addSuppressed(outer);

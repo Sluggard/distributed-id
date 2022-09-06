@@ -1,6 +1,7 @@
 package com.geega.bsc.id.common;
 
 import com.geega.bsc.id.common.factory.ZookeeperFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
@@ -12,6 +13,7 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
  * @author Jun.An3
  * @date 2022/06/30
  */
+@Slf4j
 public class ZkTest1 {
 
     public static void main(String[] args) throws Exception {
@@ -28,25 +30,25 @@ public class ZkTest1 {
             public void childEvent(CuratorFramework curatorFramework, PathChildrenCacheEvent event) throws Exception {
                 switch (event.getType()) {
                     case CHILD_ADDED:
-                        System.out.println("CHILD_ADDED:" + event.getData().getPath() + ",data:" + event.getData());
+                        log.info("CHILD_ADDED:" + event.getData().getPath() + ",data:" + event.getData());
                         break;
                     case CHILD_REMOVED:
-                        System.out.println("CHILD_REMOVED:" + event.getData().getPath() + ",data:" + event.getData());
+                        log.info("CHILD_REMOVED:" + event.getData().getPath() + ",data:" + event.getData());
                         break;
                     case CHILD_UPDATED:
-                        System.out.println("CHILD_UPDATED:" + event.getData().getPath() + ",data:" + event.getData());
+                        log.info("CHILD_UPDATED:" + event.getData().getPath() + ",data:" + event.getData());
                         break;
                     case CONNECTION_LOST:
-                        System.out.println("CONNECTION_LOST:" + event.getData().getPath() + ",data:" + event.getData());
+                        log.info("CONNECTION_LOST:" + event.getData().getPath() + ",data:" + event.getData());
                         break;
                     case CONNECTION_RECONNECTED:
-                        System.out.println("CONNECTION_RECONNECTED:" + event.getData().getPath() + ",data:" + event.getData());
+                        log.info("CONNECTION_RECONNECTED:" + event.getData().getPath() + ",data:" + event.getData());
                         break;
                     case CONNECTION_SUSPENDED:
-                        System.out.println("CONNECTION_SUSPENDED:" + event.getData().getPath() + ",data:" + event.getData());
+                        log.info("CONNECTION_SUSPENDED:" + event.getData().getPath() + ",data:" + event.getData());
                         break;
                     case INITIALIZED:
-                        System.out.println("INITIALIZED:" + event.getData().getPath() + ",data:" + event.getData());
+                        log.info("INITIALIZED:" + event.getData().getPath() + ",data:" + event.getData());
                         break;
                     default:
                         break;

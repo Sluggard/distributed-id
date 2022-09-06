@@ -1,11 +1,13 @@
 package com.geega.bsc.id.common;
 
 import com.geega.bsc.id.common.utils.SnowFlake;
+import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
+@Slf4j
 public class Test {
 
     private LinkedBlockingQueue<Long> current = new LinkedBlockingQueue<>(20);
@@ -20,7 +22,7 @@ public class Test {
                 while (true) {
                     try {
                         current.put(snowFlake.nextId());
-                        System.out.println("put 一个数据，当前size=" + current.size());
+                        log.info("put 一个数据，当前size=" + current.size());
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }

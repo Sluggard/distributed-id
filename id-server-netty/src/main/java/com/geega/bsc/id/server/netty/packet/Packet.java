@@ -3,6 +3,8 @@ package com.geega.bsc.id.server.netty.packet;
 import io.netty.buffer.ByteBuf;
 import lombok.Builder;
 import lombok.Data;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * body长度(4byte) + body数据(不定长度)
@@ -13,6 +15,8 @@ import lombok.Data;
 @Builder
 @Data
 public class Packet {
+
+    private static final Logger logger = LoggerFactory.getLogger(Packet.class);
 
     private byte[] body;
 
