@@ -6,7 +6,7 @@ package com.geega.bsc.id.common.utils;
  */
 public class TimeUtil {
 
-    public static long now() {
+    public static long nowMs() {
         return System.currentTimeMillis();
     }
 

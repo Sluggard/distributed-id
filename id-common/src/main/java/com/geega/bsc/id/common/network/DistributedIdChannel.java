@@ -3,9 +3,7 @@ package com.geega.bsc.id.common.network;
 import cn.hutool.core.builder.HashCodeBuilder;
 import com.geega.bsc.id.common.utils.ByteUtil;
 import lombok.extern.slf4j.Slf4j;
-
 import java.io.IOException;
-import java.net.Socket;
 import java.nio.channels.SelectionKey;
 import java.util.Objects;
 
@@ -36,7 +34,6 @@ public class DistributedIdChannel {
         ByteUtil.closeAll(transportLayer);
     }
 
-
     public boolean finishConnect() throws IOException {
         return transportLayer.finishConnect();
     }
@@ -57,14 +54,6 @@ public class DistributedIdChannel {
         return !transportLayer.isMute();
     }
 
-    public String socketDescription() {
-        Socket socket = transportLayer.socketChannel().socket();
-        if (socket.getInetAddress() == null) {
-            return socket.getLocalAddress().toString();
-        }
-        return socket.getInetAddress().toString();
-    }
-
     public boolean setSend(Send send) {
         if (this.send != null) {
             return false;
@@ -76,11 +65,9 @@ public class DistributedIdChannel {
 
     public ByteBufferReceive read() throws IOException {
         ByteBufferReceive result = null;
-
         if (receive == null) {
             receive = new ByteBufferReceive(maxReceiveSize, id);
         }
-
         receive(receive);
         if (receive.complete()) {
             receive.payload().rewind();

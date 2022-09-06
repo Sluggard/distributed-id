@@ -9,8 +9,9 @@ import com.geega.bsc.id.common.network.ByteBufferReceive;
 import com.geega.bsc.id.common.network.DistributedIdChannel;
 import com.geega.bsc.id.common.network.IdGeneratorTransportLayer;
 import com.geega.bsc.id.common.utils.ByteBufferUtil;
+import com.geega.bsc.id.common.utils.SleepUtil;
+import com.geega.bsc.id.common.utils.TimeUtil;
 import lombok.extern.slf4j.Slf4j;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -26,7 +27,7 @@ import java.util.concurrent.Executors;
  * @date 2022/07/25
  */
 @Slf4j
-public class IdProcessor {
+public class Connection {
 
     private final ZkClient zkClient;
 
@@ -36,16 +37,13 @@ public class IdProcessor {
 
     private Selector selector;
 
-    /**
-     * 0:正在初始化，1：建立好连接 2：断开连接
-     */
-    private volatile int connectionState = 0;
+    private volatile boolean isRunning = true;
 
     private final ExecutorService executorService;
 
     private SocketChannel channel;
 
-    public IdProcessor(ZkClient zkClient, IdClient generator, ServerNode nodeAddress) {
+    public Connection(ZkClient zkClient, IdClient generator, ServerNode nodeAddress) {
         this.zkClient = zkClient;
         this.generator = generator;
         this.init(nodeAddress.getIp(), nodeAddress.getPort());
@@ -56,70 +54,54 @@ public class IdProcessor {
             return thread;
         });
         this.executorService.execute(new Sender());
+        //超时5s无法创建连接，直接视为失败
+        waitTimeoutThrowException();
+    }
+
+    private void waitTimeoutThrowException() {
+        long nowMs = TimeUtil.nowMs();
+        int timeoutMs = 5000;
+        while (TimeUtil.nowMs() - nowMs < timeoutMs) {
+            boolean connected = channel.isConnected();
+            if (connected) {
+                return;
+            }
+            SleepUtil.waitMs(100);
+        }
+        throw new DistributedIdException("超时5s建立连接");
     }
 
     private void init(String ip, int port) {
         try {
             this.channel = SocketChannel.open();
-            channel.configureBlocking(false);
-            channel.socket().setTcpNoDelay(true);
-            channel.socket().setKeepAlive(true);
-            channel.socket().setSendBufferSize(1024);
-            channel.connect(new InetSocketAddress(ip, port));
+            this.channel.configureBlocking(false);
+            this.channel.socket().setTcpNoDelay(true);
+            this.channel.socket().setKeepAlive(true);
+            this.channel.socket().setSendBufferSize(1024);
             this.selector = Selector.open();
-
-            //注册到selector，监听事件为连接事件
-            SelectionKey selectionKey = channel.register(this.selector, SelectionKey.OP_CONNECT);
-            this.distributedIdChannel = buildChannel(selectionKey, 10 * 1024);
-            //等待连接上
-            //noinspection LoopStatementThatDoesntLoop
-            while (true) {
-                this.selector.select();
-                Iterator<SelectionKey> keysIterator = this.selector.selectedKeys().iterator();
-                while (keysIterator.hasNext()) {
-                    SelectionKey key = keysIterator.next();
-                    keysIterator.remove();
-                    if (key.isConnectable()) {
-                        //监听连接事件
-                        if (channel.isConnectionPending()) {
-                            if (channel.finishConnect()) {
-                                //设置可读事件，意思是从服务端有消息来时，提醒我;同时移除OP_CONNECT事件
-                                connectionState = 1;
-                                //关闭建立事件，打开读事件
-                                distributedIdChannel.removeConnectionEvent();
-                                distributedIdChannel.interestReadEvent();
-                                //注册客户端到zk
-                                zkClient.register(channel);
-                                break;
-                            } else {
-                                key.cancel();
-                            }
-                        } else {
-                            key.cancel();
-                        }
-                    }
-                }
-                break;
+            boolean connected = channel.connect(new InetSocketAddress(ip, port));
+            SelectionKey selectionKey;
+            if (connected) {
+                selectionKey = channel.register(this.selector, SelectionKey.OP_READ);
+            } else {
+                selectionKey = channel.register(this.selector, SelectionKey.OP_CONNECT);
             }
+            this.distributedIdChannel = buildChannel(selectionKey, 10 * 1024);
         } catch (Exception e) {
+            this.isRunning = false;
             throw new DistributedIdException("建立连接异常", e);
         } finally {
-            if (connectionState != 1) {
-                connectionState = 2;
+            if (!isRunning) {
                 close();
             }
         }
-    }
-
-    public SocketChannel getSocketChannel() {
-        return this.channel;
     }
 
     class Sender implements Runnable {
 
         @Override
         public void run() {
-            while (connectionState == 1) {
+            while (isRunning) {
                 try {
                     //监听操作系统是否有事件，事件来时，操作系统回调函数，让你阻塞状态唤醒
                     int select = selector.select();
@@ -128,39 +110,52 @@ public class IdProcessor {
                         while (keysIterator.hasNext()) {
                             SelectionKey key = keysIterator.next();
                             keysIterator.remove();
-                            //读取数据
-                            if (key.isReadable()) {
+                            if (!key.isValid()) {
+                                isRunning = false;
+                            } else if (key.isConnectable()) {
+                                //连接事件
+                                log.info("连接事件");
+                                if (channel.isConnectionPending()) {
+                                    boolean finishConnect = false;
+                                    try {
+                                        finishConnect = channel.finishConnect();
+                                    } catch (Exception e) {
+                                        isRunning = false;
+                                    }
+                                    if (finishConnect) {
+                                        //关闭建立事件
+                                        distributedIdChannel.removeConnectionEvent();
+                                        distributedIdChannel.interestReadEvent();
+                                        //注册客户端到zk
+                                        zkClient.register(channel);
+                                        break;
+                                    }
+                                }
+                            } else if (key.isReadable()) {
+                                //读取事件
+                                log.info("读事件");
                                 ByteBufferReceive receive;
                                 while ((receive = distributedIdChannel.read()) != null) {
-                                    saveId(receive);
+                                    receivePacket(receive);
                                 }
                             } else if (key.isWritable()) {
-                                //写数据
+                                //写事件
+                                log.info("写事件");
                                 distributedIdChannel.write();
-                            }
-                            if (!key.isValid()) {
-                                //修改状态
-                                connectionState = 2;
                             }
                         }
                     }
-                } catch (IOException e) {
-                    connectionState = 2;
                 } catch (Exception e) {
-                    log.error("读写错误", e);
-                } finally {
-                    if (connectionState == 2) {
-                        //关闭连接和释放资源
-                        close(distributedIdChannel);
-                    }
+                    log.warn("处理事件异常", e);
                 }
             }
+            close(distributedIdChannel);
         }
 
     }
 
     boolean isValid() {
-        return connectionState == 1;
+        return this.isRunning;
     }
 
     void close() {
@@ -178,8 +173,8 @@ public class IdProcessor {
             channel.close();
             this.executorService.shutdown();
             this.selector.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            log.warn("关闭连接异常", e);
         }
     }
 
@@ -190,14 +185,14 @@ public class IdProcessor {
         selector.wakeup();
     }
 
-    private void saveId(ByteBufferReceive byteBufferReceive) {
-        assert byteBufferReceive != null;
-        assert byteBufferReceive.payload() != null;
-        final ByteBuffer payload = byteBufferReceive.payload();
-        String idsJsonString = ByteBufferUtil.byteBufferToString(payload);
-        if (idsJsonString != null && idsJsonString.length() > 0) {
-            List<Long> ids = JSON.parseArray(idsJsonString, Long.class);
-            generator.cache(ids);
+    private void receivePacket(ByteBufferReceive byteBufferReceive) {
+        if (byteBufferReceive != null && byteBufferReceive.payload() != null) {
+            ByteBuffer payload = byteBufferReceive.payload();
+            String idsJsonString = ByteBufferUtil.byteBufferToString(payload);
+            if (idsJsonString != null && idsJsonString.length() > 0) {
+                List<Long> ids = JSON.parseArray(idsJsonString, Long.class);
+                generator.cache(ids);
+            }
         }
     }
 

@@ -45,7 +45,6 @@ public class IdHttpServer {
             bootstrap.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .handler(new LoggingHandler(LogLevel.DEBUG))
-                    .option(ChannelOption.TCP_NODELAY, true)
                     .childHandler(new IdChannelInitializer(routeHandlerMap));
 
             final ChannelFuture sync = bootstrap.bind(this.port).sync();

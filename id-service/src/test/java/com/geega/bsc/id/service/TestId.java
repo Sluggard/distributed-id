@@ -24,7 +24,7 @@ public class TestId {
     public void test() {
         long nullNum = 0;
         long idNum = 0;
-        final long now = TimeUtil.now();
+        final long now = TimeUtil.nowMs();
         for (int i = 0; i < 10000; i++) {
             final Long id = idClient.id();
             if (id == null) {
@@ -33,7 +33,7 @@ public class TestId {
                 System.out.println("ID数：" + ++idNum);
             }
         }
-        System.out.println((TimeUtil.now() - now) / 1000);
+        System.out.println((TimeUtil.nowMs() - now) / 1000);
     }
 
 }

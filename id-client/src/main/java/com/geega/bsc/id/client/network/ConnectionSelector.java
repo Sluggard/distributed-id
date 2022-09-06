@@ -3,8 +3,6 @@ package com.geega.bsc.id.client.network;
 import com.geega.bsc.id.client.IdClient;
 import com.geega.bsc.id.client.zk.ZkClient;
 import com.geega.bsc.id.common.address.ServerNode;
-import com.geega.bsc.id.common.exception.DistributedIdException;
-import com.geega.bsc.id.common.utils.AddressUtil;
 import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 import java.util.Optional;
@@ -16,40 +14,45 @@ import java.util.Optional;
  * @date 2022/07/18
  */
 @Slf4j
-public class IdProcessorDispatch {
+public class ConnectionSelector {
 
     private final ZkClient zkClient;
 
     private final IdClient generator;
 
-    private volatile IdProcessor currentProcessor;
+    private volatile Connection currentConnection;
 
-    public IdProcessorDispatch(ZkClient zkClient, IdClient generator) {
+    public ConnectionSelector(ZkClient zkClient, IdClient generator) {
         this.zkClient = zkClient;
         this.generator = generator;
     }
 
-    public IdProcessor dispatch() {
-        if (currentProcessor != null && currentProcessor.isValid()) {
-            log.info("使用连接：[{}]", AddressUtil.getConnectionId(currentProcessor.getSocketChannel()));
-            return currentProcessor;
+    public Connection dispatch() {
+        if (currentConnection != null && currentConnection.isValid()) {
+            return currentConnection;
         }
         checkClose();
         innerDispatch();
-        return currentProcessor;
+        return currentConnection;
     }
 
     private void innerDispatch() {
-        if (currentProcessor == null || !currentProcessor.isValid()) {
+        if (currentConnection == null || !currentConnection.isValid()) {
             synchronized (this) {
-                if (currentProcessor == null || !currentProcessor.isValid()) {
+                if (currentConnection == null || !currentConnection.isValid()) {
                     List<ServerNode> nodes = zkClient.getNodes();
                     if (nodes.isEmpty()) {
-                        throw new DistributedIdException("无可用服务");
+                        currentConnection = null;
+                        return;
                     }
                     //筛选出最少连接的服务节点
                     final Optional<ServerNode> first = nodes.stream().sorted().findFirst();
-                    currentProcessor = new IdProcessor(zkClient, generator, first.get());
+                    try {
+                        currentConnection = new Connection(zkClient, generator, first.get());
+                    } catch (Exception e) {
+                        currentConnection = null;
+                        log.warn("无法获取连接", e);
+                    }
                 }
             }
         }
@@ -57,10 +60,10 @@ public class IdProcessorDispatch {
 
     private void checkClose() {
         synchronized (this) {
-            if (this.currentProcessor != null && !this.currentProcessor.isValid()) {
-                this.currentProcessor.close();
+            if (this.currentConnection != null && !this.currentConnection.isValid()) {
+                this.currentConnection.close();
                 //help gc
-                this.currentProcessor = null;
+                this.currentConnection = null;
             }
         }
     }

@@ -1,7 +1,8 @@
 package com.geega.bsc.id.client;
 
 import com.geega.bsc.id.client.cache.CacheConfig;
-import com.geega.bsc.id.client.network.IdProcessorDispatch;
+import com.geega.bsc.id.client.network.Connection;
+import com.geega.bsc.id.client.network.ConnectionSelector;
 import com.geega.bsc.id.client.zk.ZkClient;
 import com.geega.bsc.id.common.config.ZkConfig;
 import org.slf4j.Logger;
@@ -37,7 +38,7 @@ public class IdClient {
 
     private final ExecutorService executorService;
 
-    private final IdProcessorDispatch processorDispatch;
+    private final ConnectionSelector connectionSelector;
 
     private final AtomicBoolean isExpanding = new AtomicBoolean(false);
 
@@ -45,7 +46,7 @@ public class IdClient {
         this.capacity = cacheConfig.getCapacity();
         this.trigger = cacheConfig.getTrigger();
         this.idQueue = new LinkedBlockingQueue<>(this.capacity);
-        this.processorDispatch = new IdProcessorDispatch(new ZkClient(zkConfig), this);
+        this.connectionSelector = new ConnectionSelector(new ZkClient(zkConfig), this);
         //noinspection AlibabaThreadPoolCreation
         this.executorService = Executors.newSingleThreadExecutor(r -> {
             Thread thread = new Thread(r, "Get-Id-Schedule");
@@ -101,7 +102,10 @@ public class IdClient {
 
     private void executeOnceSync(int num) {
         try {
-            this.processorDispatch.dispatch().poll(num);
+            Connection connection = this.connectionSelector.dispatch();
+            if (connection != null){
+                connection.poll(num);
+            }
         } catch (Exception e) {
             //do nothing
             LOGGER.error("拉取ID异常", e);
