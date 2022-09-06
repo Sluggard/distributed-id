@@ -32,18 +32,14 @@ public class DefaultChannelInboundHandler extends ChannelInboundHandlerAdapter {
         this.receivePacketListener = receivePacketListener;
     }
 
-    public boolean isClosed() {
-        return !socketChannel.isActive();
+    public boolean isActive() {
+        return socketChannel.isActive();
     }
 
     public String getConnectionId() {
         InetSocketAddress localAddress = socketChannel.localAddress();
         InetSocketAddress remoteAddress = socketChannel.remoteAddress();
         return AddressUtil.getConnectionId(localAddress, remoteAddress);
-    }
-
-    public SocketChannel socketChannel() {
-        return this.socketChannel;
     }
 
     @Override

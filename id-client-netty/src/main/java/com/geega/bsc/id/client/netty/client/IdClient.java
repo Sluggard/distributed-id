@@ -1,6 +1,6 @@
 package com.geega.bsc.id.client.netty.client;
 
-import com.geega.bsc.id.client.netty.common.ConnectionPool;
+import com.geega.bsc.id.client.netty.common.ConnectionSelector;
 import com.geega.bsc.id.client.netty.config.CacheConfig;
 import com.geega.bsc.id.client.netty.zk.ZkClient;
 import com.geega.bsc.id.common.config.ZkConfig;
@@ -33,7 +33,7 @@ public class IdClient {
 
     private final ExecutorService executorService;
 
-    private final ConnectionPool connectionPool;
+    private final ConnectionSelector connectionPool;
 
     private final AtomicBoolean isExpanding = new AtomicBoolean(false);
 
@@ -41,7 +41,7 @@ public class IdClient {
         this.capacity = cacheConfig.getCapacity();
         this.trigger = cacheConfig.getTrigger();
         this.idQueue = new LinkedBlockingQueue<>(this.capacity);
-        this.connectionPool = new ConnectionPool(new ZkClient(zkConfig), this);
+        this.connectionPool = new ConnectionSelector(new ZkClient(zkConfig), this);
         //noinspection AlibabaThreadPoolCreation
         this.executorService = Executors.newSingleThreadExecutor(r -> {
             Thread thread = new Thread(r, "Get-Id-Schedule");

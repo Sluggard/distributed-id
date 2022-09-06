@@ -9,13 +9,13 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * 连接池
+ * 网络连接选择器
  *
  * @author Jun.An3
  * @date 2022/09/05
  */
 @Slf4j
-public class ConnectionPool {
+public class ConnectionSelector {
 
     private final ZkClient zkClient;
 
@@ -23,9 +23,22 @@ public class ConnectionPool {
 
     private final IdClient idClient;
 
-    public ConnectionPool(ZkClient zkClient, IdClient idClient) {
+    public ConnectionSelector(ZkClient zkClient, IdClient idClient) {
         this.zkClient = zkClient;
         this.idClient = idClient;
+        this.addHook();
+    }
+
+    /**
+     * 增加hook，当关闭进程时，关闭网络客户端资源
+     */
+    private void addHook() {
+        //noinspection AlibabaAvoidManuallyCreateThread
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (currentNetClient != null) {
+                currentNetClient.close();
+            }
+        }));
     }
 
     public NetClient one() {
@@ -43,22 +56,18 @@ public class ConnectionPool {
                     //关闭无效的连接
                     closeNetClient();
                     //获取新连接
-                    try {
-                        log.info("创建连接开始：{}", serverNode);
-                        currentNetClient = new NetClient(serverNode, zkClient, idClient);
-                    } catch (Exception e) {
-                        throw new DistributedIdException("创建连接失败", e);
-                    }
+                    currentNetClient = new NetClient(serverNode, zkClient, idClient);
                 }
             }
         }
         return currentNetClient;
     }
 
-    private void closeNetClient() {
+    private synchronized void closeNetClient() {
         if (currentNetClient != null && currentNetClient.isClosed()) {
             currentNetClient.close();
         }
     }
+
 
 }

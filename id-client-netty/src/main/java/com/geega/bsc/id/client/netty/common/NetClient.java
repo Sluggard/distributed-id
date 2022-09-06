@@ -21,7 +21,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldPrepender;
 import lombok.extern.slf4j.Slf4j;
-import java.util.List;
 
 /**
  * 网络客户端
@@ -36,14 +35,16 @@ public class NetClient {
 
     private final IdClient idClient;
 
-    private DefaultChannelInboundHandler defaultChannelInboundHandler;
+    private final DefaultChannelInboundHandler defaultChannelInboundHandler;
+
+    private final NioEventLoopGroup bootGroup;
 
     public NetClient(ServerNode serverNode, ZkClient zkClient, IdClient idClient) {
         this.zkClient = zkClient;
         this.idClient = idClient;
         this.defaultChannelInboundHandler = new DefaultChannelInboundHandler(getConnectionListener(), getReceivePacketListener());
         try {
-            NioEventLoopGroup bootGroup = new NioEventLoopGroup(1);
+            bootGroup = new NioEventLoopGroup(1);
             Bootstrap bootstrap = new Bootstrap();
             bootstrap.group(bootGroup)
                     .channel(NioSocketChannel.class)
@@ -80,14 +81,7 @@ public class NetClient {
     }
 
     private ReceivePacketListener getReceivePacketListener() {
-        return new ReceivePacketListener() {
-            @Override
-            public void receive(Packet packet) {
-                List<Long> ids = packet.getIds();
-                log.info("ids：{}", ids);
-                idClient.cache(ids);
-            }
-        };
+        return packet -> idClient.cache(packet.getIds());
     }
 
     /**
@@ -100,7 +94,7 @@ public class NetClient {
             Packet packet = Packet.builder()
                     .body(ByteBufferUtil.intToByte(num))
                     .build();
-            if (!defaultChannelInboundHandler.isClosed()) {
+            if (defaultChannelInboundHandler.isActive()) {
                 defaultChannelInboundHandler.send(packet);
             } else {
                 log.error("发送数据异常");
@@ -115,14 +109,18 @@ public class NetClient {
      * 连接是否有效
      */
     public boolean isClosed() {
-        return !defaultChannelInboundHandler.isClosed();
+        return !defaultChannelInboundHandler.isActive();
     }
 
     /**
      * 关闭该连接的所有资源
      */
     public void close() {
-
+        try {
+            bootGroup.shutdownGracefully();
+        } catch (Exception ignore) {
+            //do nothing
+        }
     }
 
 }

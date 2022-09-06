@@ -8,6 +8,11 @@ package com.geega.bsc.id.client.netty.handler;
  */
 public interface ConnectListener {
 
+    /**
+     * 连接状态监听器
+     *
+     * @param connected 状态，ture：建立连接，false：关闭连接
+     */
     void statusChanged(boolean connected);
 
 }
