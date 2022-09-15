@@ -93,7 +93,10 @@ public class DistributedIdChannel {
     private boolean send(Send send) throws IOException {
         send.writeTo(transportLayer);
         if (send.completed()) {
-            //写完数据，要去掉写事件
+            //写完数据，要去掉写事件，因为nio是水平触发，如果不取消写事件，会一直接收到write ready notification
+            //写完数据，取消write事件，添加读事件，有写数据时，就添加write事件；读取完数据，取消read事件；
+            //但是这里不需要取消读事件，一个客户端只创建了一个连接，有数据时，就一直读取，未读完，下一次select时，读事件
+            //还是有的，继续读取
             transportLayer.removeInterestOps(SelectionKey.OP_WRITE);
         }
         return send.completed();

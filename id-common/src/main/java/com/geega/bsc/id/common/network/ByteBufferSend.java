@@ -6,6 +6,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.GatheringByteChannel;
 
 /**
+ * buffers用于装数据
+ * remaining主要是用于标识是否已经发送完成
+ *
  * @author Jun.An3
  * @date 2022/07/18
  */

@@ -108,10 +108,13 @@ public class ServerProcessor extends Thread {
                                 continue;
                             }
                         }
+                        //可以读取的条件是，channel可读且接受完的数据要放入处理队列中
+                        //异步编程中有个最佳原则，io事件处理在一个线程中，业务数据处理要在一个线程中，io和业务处理互不影响，效率达到最大
+                        //这里还有一个点需要说明，如果应用并发高，应用中需要创建多个连接，以便支持高并发的请求
                         if (selectionKey.isReadable() && !hasCompletedReceive(distributedIdChannel)) {
-                            ByteBufferReceive networkReceive;
-                            while ((networkReceive = distributedIdChannel.read()) != null) {
-                                addToCompletedReceives(distributedIdChannel, networkReceive);
+                            ByteBufferReceive receive;
+                            while ((receive = distributedIdChannel.read()) != null) {
+                                addToCompletedReceives(distributedIdChannel, receive);
                             }
                         }
                         if (selectionKey.isWritable()) {
