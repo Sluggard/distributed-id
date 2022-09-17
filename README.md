@@ -91,11 +91,3 @@ id.zk.sessionTimeoutMs=10000
 # zk连接超时
 id.zk.connectionTimeoutMs=10000
 ```
-
-##### 待办事项
-
-- 设置日志等级
-- 解决NIO cpu打满bug、各种异常处理、缓冲溢出、线程泄露问题
-- 补充解决的痛点
-- 连接重试机制
-- 性能统计
