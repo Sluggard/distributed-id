@@ -1,0 +1,18 @@
+server:
+  port: 9108
+
+spring:
+  application:
+    name: captcha-client-demo
+  profiles:
+    active: local
+
+#日志打印配置
+logging:
+  level:
+    root: info
+    com.geega.bsc.captcha.service: warn
+    com.alibaba.nacos.client.naming: warn
+
+captcha:
+  service-url-prefix: http://127.0.0.1:9107

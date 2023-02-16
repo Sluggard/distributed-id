@@ -1,0 +1,2 @@
+com.geega.bsc.captcha.starter.service.impl.CaptchaCacheServiceMemImpl
+com.geega.bsc.captcha.starter.service.impl.CaptchaCacheServiceRedisImpl

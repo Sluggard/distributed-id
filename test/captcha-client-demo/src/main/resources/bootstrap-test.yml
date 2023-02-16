@@ -1,0 +1,6 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: http://nacos-cs.middleware-nacos-201:8848
+        namespace: 4804405f-f1b6-4534-8478-53aab1a18253

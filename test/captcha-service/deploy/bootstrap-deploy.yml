@@ -1,0 +1,6 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: nacos-cs.middleware-nacos-pub:8848
+        namespace: 5be14b43-819b-4fc2-87a0-5ce6dfde0e1f
