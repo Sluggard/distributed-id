@@ -1,3 +1,0 @@
-com.geega.bsc.captcha.starter.service.impl.BlockPuzzleCaptchaServiceImpl
-com.geega.bsc.captcha.starter.service.impl.ClickWordCaptchaServiceImpl
-com.geega.bsc.captcha.starter.service.impl.DefaultCaptchaServiceImpl

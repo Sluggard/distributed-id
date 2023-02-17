@@ -3,10 +3,11 @@ package com.geega.bsc.id.common.utils;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * twitter的snowflake算法 -- java实现
+ * twitter的snowflake算法
  * 协议格式： 0 - 41位时间戳 - 2位数据中心标识 - 8位机器标识 - 12位序列号
  *
- * @author Yd
+ * @author Jun.An3
+ * @date 2022/09/14
  */
 @Slf4j
 public class SnowFlake {
